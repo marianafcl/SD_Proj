@@ -4,6 +4,9 @@ import java.io.IOException;
 
 import javax.xml.ws.Endpoint;
 
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
+
 /** The endpoint manager starts and registers the service. */
 public class StationEndpointManager {
 
@@ -24,20 +27,20 @@ public class StationEndpointManager {
 	private StationPortImpl portImpl = new StationPortImpl(this);
 
 	// /** Obtain Port implementation */
-	// public StationPortType getPort() {
-	// return portImpl;
-	// }
+		public StationPortType getPort() {
+		return portImpl;
+	}
 
 	/** Web Service end point */
 	private Endpoint endpoint = null;
 
 	// /** UDDI Naming instance for contacting UDDI server */
-	// private UDDINaming uddiNaming = null;
+	 private UDDINaming uddiNaming = null;
 	//
 	// /** Get UDDI Naming instance for contacting UDDI server */
-	// UDDINaming getUddiNaming() {
-	// return uddiNaming;
-	// }
+	 	UDDINaming getUddiNaming() {
+	 	return uddiNaming;
+	 	}
 
 	/** output option */
 	private boolean verbose = true;
@@ -50,11 +53,15 @@ public class StationEndpointManager {
 		this.verbose = verbose;
 	}
 
-	/** constructor with provided UDDI location, WS name, and WS URL */
-	public StationEndpointManager(String uddiURL, String wsName, String wsURL) {
+	/** constructor with provided UDDI location, WS name, and WS URL 
+	 * @throws UDDINamingException */
+	public StationEndpointManager(String uddiURL, String wsName, String wsURL) throws UDDINamingException {
+		System.out.println(uddiURL);
 		this.uddiURL = uddiURL;
 		this.wsName = wsName;
 		this.wsURL = wsURL;
+		this.uddiNaming = new UDDINaming(uddiURL);
+		this.uddiNaming.rebind(wsName, wsURL);
 	}
 
 	/** constructor with provided web service URL */

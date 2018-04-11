@@ -44,6 +44,7 @@ public class BaseIT {
 		}
 		client.setVerbose("true".equalsIgnoreCase(verboseEnabled));
 	}
+	
 
 	@AfterClass
 	public static void cleanup() {
