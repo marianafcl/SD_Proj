@@ -21,7 +21,7 @@
 
 		<mainclass>org.binas.ws.BinasApp</mainclass>
 		<uddi.url>http://localhost:9090</uddi.url>
-		<group.id>CXX</group.id>
+		<group.id>A48</group.id>
 
 		<ws.name>${group.id}_Binas</ws.name>
 		<ws.url>http://localhost:8080/binas-ws/endpoint</ws.url>
@@ -35,6 +35,11 @@
 			<artifactId>jaxws-rt</artifactId>
 			<version>2.2.10</version>
 		</dependency>
+		<dependency>
+        	<groupId>pt.ulisboa.tecnico.sdis</groupId>
+        	<artifactId>uddi-naming</artifactId>
+        	<version>1.2</version>
+    	</dependency>
 	</dependencies>
 
 	<build>
