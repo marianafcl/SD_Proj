@@ -56,12 +56,9 @@ public class StationEndpointManager {
 	/** constructor with provided UDDI location, WS name, and WS URL 
 	 * @throws UDDINamingException */
 	public StationEndpointManager(String uddiURL, String wsName, String wsURL) throws UDDINamingException {
-		System.out.println(uddiURL);
 		this.uddiURL = uddiURL;
 		this.wsName = wsName;
 		this.wsURL = wsURL;
-		this.uddiNaming = new UDDINaming(uddiURL);
-		this.uddiNaming.rebind(wsName, wsURL);
 	}
 
 	/** constructor with provided web service URL */
@@ -126,11 +123,18 @@ public class StationEndpointManager {
 	/* UDDI */
 
 	void publishToUDDI() throws Exception {
-		// TODO
+		this.uddiNaming = new UDDINaming(uddiURL);
+		this.uddiNaming.rebind(wsName, wsURL);
 	}
 
 	void unpublishFromUDDI() {
-		// TODO
+		//TODO
+		// ver onde apanhar a exceçao 
+		try {
+			this.uddiNaming.unbind(uddiURL);
+		}catch(UDDINamingException e) {
+			System.out.printf("Caught exception when unpublishing from UDDI: %s%n", e);
+		}
 	}
 
 }
