@@ -71,7 +71,7 @@ public class BinasEndpointManager {
 
 		/* end point management */
 
-		public void start() throws Exception {
+		public void start() {
 			try {
 				// publish end point
 				endpoint = Endpoint.create(this.portImpl);
@@ -103,7 +103,7 @@ public class BinasEndpointManager {
 			}
 		}
 
-		public void stop() throws Exception {
+		public void stop() {
 			try {
 				if (endpoint != null) {
 					// stop end point
@@ -122,11 +122,27 @@ public class BinasEndpointManager {
 
 		/* UDDI */
 
-		public Collection<String> listUDDI() throws Exception {
-			return this.uddiNaming.list(this.uddiURL);
+		public Collection<String> listUDDI() {
+			try {
+				return this.uddiNaming.list(this.uddiURL);
+			}
+			catch(UDDINamingException e) {
+				if (verbose) {
+					System.out.printf("Caught exception when stopping: %s%n", e);
+				}
+				return null;
+			}
 		}
 
 		public String lookUpUDDI(String stationId) {
-			return this.uddiNaming.lookup(stationId);
+			try {
+				return this.uddiNaming.lookup(stationId);
+			}
+			catch(UDDINamingException e) {
+				if (verbose) {
+					System.out.printf("Caught exception when stopping: %s%n", e);
+				}
+				return null;
+			}
 	}
 }

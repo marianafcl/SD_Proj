@@ -1,9 +1,17 @@
 package org.binas.domain;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.binas.domain.exception.AlreadyHasBinaException;
+import org.binas.domain.exception.BadInitException;
+import org.binas.domain.exception.EmailExistsException;
+import org.binas.domain.exception.InvalidEmailException;
+import org.binas.domain.exception.NoBinaRentedException;
+import org.binas.domain.exception.NoCreditException;
+import org.binas.domain.exception.UserNotExistsException;
 import org.binas.ws.BadInit;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.CoordinatesView;
@@ -39,7 +47,8 @@ public class BinasManager {
 	}
 	
 	/**ActivateUser Method **/
-	public UserView activateUser(String email) {
+	public UserView activateUser(String email) throws EmailExistsException, InvalidEmailException {
+		//TODO: VERIFY EMAIL (USER?/?MANAGER)
 		User user = new User(email);
 		users.put(email, user);
 		
@@ -106,9 +115,41 @@ public class BinasManager {
 		}
 		return max;
 	}
+
+	
+	//TODO: IMPLEMENT THESE:
+	
+	public List<StationView> listStations(List<StationView> stations, Integer numberOfStations,
+			CoordinatesView coordinates) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public void returnBina(String email) throws NoBinaRentedException, UserNotExistsException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void getBina(String email) throws AlreadyHasBinaException, NoCreditException, UserNotExistsException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public int getCredit(String email) throws UserNotExistsException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public void reset() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void init(int userInitialPoints) throws BadInitException {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	//---------Getters and Setters------------
 	
-	
-
 }
