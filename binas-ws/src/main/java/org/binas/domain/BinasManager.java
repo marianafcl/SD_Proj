@@ -1,16 +1,18 @@
 package org.binas.domain;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.binas.ws.BadInit;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.CoordinatesView;
 import org.binas.ws.StationView;
+import org.binas.ws.UserView;
 
 public class BinasManager {
 	
-	
+	private HashMap<String, User> users = new HashMap();
 
 	// Singleton -------------------------------------------------------------
 
@@ -34,6 +36,21 @@ public class BinasManager {
 		if(userInitialPoints < 0) {
 			//TODO throw new BadInit_Exception("", null); Corrigir
 		}
+	}
+	
+	/**ActivateUser Method **/
+	public UserView activateUser(String email) {
+		User user = new User(email);
+		users.put(email, user);
+		
+		UserView userView = new UserView();
+		
+		userView.setEmail(email);
+		userView.setHasBina(user.getHasBina());
+		userView.setCredit(user.getSaldo());
+		
+		return userView;
+		
 	}
 
 	/** Retrieve List Stations **/

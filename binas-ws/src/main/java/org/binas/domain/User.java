@@ -5,9 +5,7 @@ import java.util.HashMap;
 import org.binas.ws.UserView;
 
 public class User {
-	//por no BinasManager
-	private HashMap<String, Client> useres = new HashMap(); 
-	//
+	
 	private String email;
 	private int saldo = 10;
 	private boolean hasBina= false;
@@ -43,16 +41,3 @@ public class User {
 
 
 // colocar na fucking BinasMAnager tmabem 
-public UserView activateUser(String email) {
-	User user = new User(email);
-	useres.put(email, user);
-	
-	UserView userView = new UserView();
-	
-	userView.setEmail(email);
-	userView.setHasBina(user.getHasBina());
-	userView.setCredit(user.getSaldo());
-	
-	return userView;
-	
-}
