@@ -84,13 +84,12 @@ public class BinasClient implements BinasPortType {
 		 System.out.println("Creating stub ...");
 		 service = new BinasService();
 		 port = service.getBinasPort();
-		
+		//TODO
 		 if (wsURL != null) {
 		 if (verbose)
 		 System.out.println("Setting endpoint address ...");
 		 BindingProvider bindingProvider = (BindingProvider) port;
-		 Map<String, Object> requestContext = bindingProvider
-		 .getRequestContext();
+		 Map<String, Object> requestContext = bindingProvider.getRequestContext();
 		 requestContext.put(/*ENDPOINT_ADDRESS_PROPERTY*/null, wsURL);
 		 }
     }

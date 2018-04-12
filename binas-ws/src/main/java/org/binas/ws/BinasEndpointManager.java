@@ -121,10 +121,15 @@ public class BinasEndpointManager {
 		}
 
 		/* UDDI */
+		
+		void publishToUDDI() throws Exception {
+			this.uddiNaming = new UDDINaming(uddiURL);
+			this.uddiNaming.rebind(wsName, wsURL);
+		}
 
 		public Collection<String> listUDDI() {
 			try {
-				return this.uddiNaming.list(this.uddiURL);
+				return this.uddiNaming.list("%");
 			}
 			catch(UDDINamingException e) {
 				if (verbose) {
