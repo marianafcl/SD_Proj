@@ -22,12 +22,12 @@ import org.binas.station.ws.cli.StationClientException;
  * below "map" the Java class to the WSDL definitions.
  */
 
- @WebService(endpointInterface = "org.binas.station.ws.StationPortType",
-		 wsdlLocation = "station.wsdl",
-		 name ="StationWebService",
-		 portName = "StationPort",
-		 targetNamespace="http://ws.station.binas.org/",
-		 serviceName = "StationService"
+ @WebService(endpointInterface = "org.binas.ws.BinasPortType",
+		 wsdlLocation = "binas.wsdl",
+		 name ="BinasWebService",
+		 portName = "BinasPort",
+		 targetNamespace="http://ws.binas.org/",
+		 serviceName = "BinasService"
  )
  
 public class BinasPortImpl implements BinasPortType {
