@@ -16,7 +16,6 @@
     
 		<module>station-ws</module>
 		<module>station-ws-cli</module>
-		<module>uddi-namming</module>
 		<module>binas-ws</module>
 		<module>binas-ws-cli</module>
 	</modules>

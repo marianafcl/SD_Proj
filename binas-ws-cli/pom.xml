@@ -24,7 +24,7 @@
 
 		<mainclass>org.binas.ws.cli.BinasClientApp</mainclass>
 
-		<group.id>CXX</group.id>
+		<group.id>A48</group.id>
 		<uddi.url>http://localhost:9090</uddi.url>
 		<ws.name>${group.id}_Binas</ws.name>
 		<supplier.ws.name>${group.id}_Binas</supplier.ws.name>

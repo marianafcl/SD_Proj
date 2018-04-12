@@ -20,7 +20,7 @@ public class StationApp {
 		String uddiURL;
 		StationEndpointManager endpoint;
 		
-		// TODO handle UDDI arguments
+		// handle UDDI arguments
 		if (args.length == 3) {
 			uddiURL = args[2];
 			endpoint = new StationEndpointManager(uddiURL, wsName, wsURL);
@@ -33,7 +33,7 @@ public class StationApp {
 
 		System.out.println(StationApp.class.getSimpleName() + " running");
 
-		// TODO start Web Service
+		// start Web Service
 		 try {
 		endpoint.start();
 		endpoint.awaitConnections();

@@ -1,6 +1,7 @@
 package org.binas.ws;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import javax.xml.ws.Endpoint;
 
@@ -56,12 +57,10 @@ public class BinasEndpointManager {
 		/** constructor with provided UDDI location, WS name, and WS URL 
 		 * @throws UDDINamingException */
 		public BinasEndpointManager(String uddiURL, String wsName, String wsURL) throws UDDINamingException {
-			System.out.println(uddiURL);
 			this.uddiURL = uddiURL;
 			this.wsName = wsName;
 			this.wsURL = wsURL;
-			this.uddiNaming = new UDDINaming(uddiURL);
-			this.uddiNaming.rebind(wsName, wsURL);
+			
 		}
 
 		/** constructor with provided web service URL */
@@ -88,7 +87,6 @@ public class BinasEndpointManager {
 				}
 				throw e;
 			}
-			publishToUDDI();
 		}
 
 		public void awaitConnections() {
@@ -120,18 +118,15 @@ public class BinasEndpointManager {
 				}
 			}
 			this.portImpl = null;
-			unpublishFromUDDI();
 		}
 
 		/* UDDI */
 
-		void publishToUDDI() throws Exception {
-			// TODO
+		public Collection<String> listUDDI() throws Exception {
+			return this.uddiNaming.list(this.uddiURL);
 		}
 
-		void unpublishFromUDDI() {
-			// TODO
-		}
-
+		public String lookUpUDDI(String stationId) {
+			return this.uddiNaming.lookup(stationId);
 	}
 }

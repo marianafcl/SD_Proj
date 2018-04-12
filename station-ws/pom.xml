@@ -101,7 +101,7 @@
 					<arguments>
 						<argument>${ws.name}</argument>
 						<argument>${ws.url}</argument>
-						<argumen>${uddi.url}</argumen>
+						<argument>${uddi.url}</argument>
 					</arguments>
 				</configuration>
 			</plugin>
