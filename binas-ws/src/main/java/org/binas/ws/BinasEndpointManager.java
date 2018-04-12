@@ -71,7 +71,7 @@ public class BinasEndpointManager {
 
 		/* end point management */
 
-		public void start() {
+		public void start() throws Exception {
 			try {
 				// publish end point
 				endpoint = Endpoint.create(this.portImpl);
@@ -87,6 +87,7 @@ public class BinasEndpointManager {
 				}
 				throw e;
 			}
+			publishToUDDI();
 		}
 
 		public void awaitConnections() {
@@ -125,11 +126,12 @@ public class BinasEndpointManager {
 		void publishToUDDI() throws Exception {
 			this.uddiNaming = new UDDINaming(uddiURL);
 			this.uddiNaming.rebind(wsName, wsURL);
+			System.out.println(this.uddiNaming.getUDDIUrl());
 		}
 
 		public Collection<String> listUDDI() {
 			try {
-				return this.uddiNaming.list("%");
+				return this.uddiNaming.list("A48_Station%");
 			}
 			catch(UDDINamingException e) {
 				if (verbose) {
