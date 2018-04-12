@@ -21,6 +21,7 @@ import org.binas.ws.UserView;
 public class BinasManager {
 	
 	private HashMap<String, User> users = new HashMap();
+	private int userInitialPoints = 10;
 
 	// Singleton -------------------------------------------------------------
 
@@ -39,12 +40,6 @@ public class BinasManager {
 		return SingletonHolder.INSTANCE;
 	}
 	
-	/**InitTest with userInitialPoints **/
-	public synchronized void TestInit(int userInitialPoints) throws BadInit_Exception{
-		if(userInitialPoints < 0) {
-			//TODO throw new BadInit_Exception("", null); Corrigir
-		}
-	}
 	
 	/**ActivateUser Method **/
 	public UserView activateUser(String email) throws EmailExistsException, InvalidEmailException {
@@ -60,28 +55,6 @@ public class BinasManager {
 		
 		return userView;
 		
-	}
-
-	/** Retrieve List Stations **/
-	
-	public synchronized List<StationView> ListStations(List<StationView> stations, CoordinatesView coordinates, int k) {
-		List<StationView> closestStations = null;
-		int maxDist = 0;
-		for (StationView station : stations) {
-			if(closestStations.size() > k) {
-				if(maxDist > this.distance(station.getCoordinate(), coordinates)) {
-					closestStations = this.remove(closestStations, coordinates);
-					maxDist = this.max(closestStations, coordinates);
-				}
-			}
-			else {
-				closestStations.add(station);
-				if (maxDist < this.distance(station.getCoordinate(), coordinates)) {
-					maxDist = this.distance(station.getCoordinate(), coordinates);
-				}
-			}
-		}
-		return closestStations;
 	}
 	
 	
@@ -119,10 +92,27 @@ public class BinasManager {
 	
 	//TODO: IMPLEMENT THESE:
 	
-	public List<StationView> listStations(List<StationView> stations, Integer numberOfStations,
-			CoordinatesView coordinates) {
-		// TODO Auto-generated method stub
-		return null;
+/** Retrieve List Stations **/
+	
+	public synchronized List<StationView> listStations(List<StationView> stations, int k, CoordinatesView coordinates) {
+		List<StationView> closestStations = null;
+		int maxDist = 0;
+		for (StationView station : stations) {
+			if(closestStations.size() > k) {
+				if(maxDist > this.distance(station.getCoordinate(), coordinates)) {
+					closestStations = this.remove(closestStations, coordinates);
+					closestStations.add(station);
+					maxDist = this.max(closestStations, coordinates);
+				}
+			}
+			else {
+				closestStations.add(station);
+				if (maxDist < this.distance(station.getCoordinate(), coordinates)) {
+					maxDist = this.distance(station.getCoordinate(), coordinates);
+				}
+			}
+		}
+		return closestStations;
 	}
 
 	public void returnBina(String email) throws NoBinaRentedException, UserNotExistsException {
@@ -146,10 +136,17 @@ public class BinasManager {
 	}
 
 	public void init(int userInitialPoints) throws BadInitException {
-		// TODO Auto-generated method stub
-		
+		if(this.userInitialPoints < 0) {
+			 throw new BadInitException();
+		}
+		this.userInitialPoints = userInitialPoints;
 	}
 	
 	//---------Getters and Setters------------
+	
+	public int getUserInitialPoints() {
+		return this.userInitialPoints;
+	}
+	 
 	
 }

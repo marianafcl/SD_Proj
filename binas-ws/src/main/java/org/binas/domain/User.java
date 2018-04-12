@@ -7,11 +7,12 @@ import org.binas.ws.UserView;
 public class User {
 	
 	private String email;
-	private int saldo = 10;
+	private int saldo;
 	private boolean hasBina= false;
 	
-	public User(String email ) {
+	public User(String email) {
 		this.email = email;
+		this.saldo = BinasManager.getInstance().getUserInitialPoints();
 	}
 	
 	public String getEmail() {
@@ -40,4 +41,3 @@ public class User {
 }
 
 
-// colocar na fucking BinasMAnager tmabem 
