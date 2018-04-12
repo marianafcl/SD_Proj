@@ -71,7 +71,7 @@ public class BinasEndpointManager {
 
 		/* end point management */
 
-		public void start() {
+		public void start() throws Exception {
 			try {
 				// publish end point
 				endpoint = Endpoint.create(this.portImpl);
@@ -87,6 +87,7 @@ public class BinasEndpointManager {
 				}
 				throw e;
 			}
+			publishToUDDI();
 		}
 
 		public void awaitConnections() {
@@ -118,6 +119,7 @@ public class BinasEndpointManager {
 				}
 			}
 			this.portImpl = null;
+			unpublishFromUDDI();
 		}
 
 		/* UDDI */
@@ -125,6 +127,16 @@ public class BinasEndpointManager {
 		void publishToUDDI() throws Exception {
 			this.uddiNaming = new UDDINaming(uddiURL);
 			this.uddiNaming.rebind(wsName, wsURL);
+		}
+		
+		void unpublishFromUDDI() {
+			//TODO
+			// ver onde apanhar a exceçao 
+			try {
+				this.uddiNaming.unbind(uddiURL);
+			}catch(UDDINamingException e) {
+				System.out.printf("Caught exception when unpublishing from UDDI: %s%n", e);
+			}
 		}
 
 		public Collection<String> listUDDI() {
