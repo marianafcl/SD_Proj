@@ -119,6 +119,7 @@ public class BinasEndpointManager {
 				}
 			}
 			this.portImpl = null;
+			unpublishFromUDDI();
 		}
 
 		/* UDDI */
@@ -127,6 +128,16 @@ public class BinasEndpointManager {
 			this.uddiNaming = new UDDINaming(uddiURL);
 			this.uddiNaming.rebind(wsName, wsURL);
 			System.out.println(this.uddiNaming.getUDDIUrl());
+		}
+		
+		void unpublishFromUDDI() {
+			//TODO
+			// ver onde apanhar a exceçao 
+			try {
+				this.uddiNaming.unbind(uddiURL);
+			}catch(UDDINamingException e) {
+				System.out.printf("Caught exception when unpublishing from UDDI: %s%n", e);
+			}
 		}
 
 		public Collection<String> listUDDI() {
