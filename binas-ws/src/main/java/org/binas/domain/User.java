@@ -1,9 +1,5 @@
 package org.binas.domain;
 
-import java.util.HashMap;
-
-import org.binas.ws.UserView;
-
 public class User {
 	
 	private String email;
