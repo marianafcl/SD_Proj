@@ -22,7 +22,7 @@ public class GetInfoIT extends BaseIT {
 	protected static Properties testProps1;
 	protected static StationClient client1;
  
- @Before
+	@Before
 	public void oneSetup() throws Exception {
 		testProps1 = new Properties();
 		try {
