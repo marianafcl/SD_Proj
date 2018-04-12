@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.binas.domain.exception.AlreadyHasBinaException;
 import org.binas.domain.exception.BadInitException;
@@ -19,9 +21,15 @@ import org.binas.ws.StationView;
 import org.binas.ws.UserView;
 
 public class BinasManager {
+	private final static String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{1,})$";
 	
-	private HashMap<String, User> users = new HashMap();
+	private HashMap<String, User> users = new HashMap<String, User>();
 	private int userInitialPoints = 10;
+	
+	public Pattern pattern;
+	public Matcher matcher;
+
+	
 
 	// Singleton -------------------------------------------------------------
 
@@ -42,22 +50,37 @@ public class BinasManager {
 	
 	
 	/**ActivateUser Method **/
-	public UserView activateUser(String email) throws EmailExistsException, InvalidEmailException {
-		//TODO: VERIFY EMAIL (USER?/?MANAGER)
-		User user = new User(email);
-		users.put(email, user);
+	public synchronized UserView activateUser(String email) throws EmailExistsException, InvalidEmailException {
+		boolean b = verifyEmail(email);
+		if(users.containsKey(email)) {
+			throw new EmailExistsException();
+		}
 		
-		UserView userView = new UserView();
+		if(b) {
+			User user = new User(email);
+			users.put(email, user);
 		
-		userView.setEmail(email);
-		userView.setHasBina(user.getHasBina());
-		userView.setCredit(user.getSaldo());
+			UserView userView = new UserView();
 		
-		return userView;
-		
+			userView.setEmail(email);
+			userView.setHasBina(user.getHasBina());
+			userView.setCredit(user.getSaldo());
+			
+			return userView;
+		}
+		else {
+			throw new InvalidEmailException();
+		}	
 	}
 	
 	
+	private boolean verifyEmail(String email) {
+		pattern = Pattern.compile(EMAIL_PATTERN);
+		matcher = pattern.matcher(email);
+		return matcher.matches();
+	}
+
+
 	/**Calculates Distance **/
 	public int distance (CoordinatesView coordinate, CoordinatesView coordinateUser) {
 		return (int) Math.sqrt((coordinate.getX()-coordinateUser.getX())^2 + (coordinate.getY() - coordinateUser.getY())^2);
