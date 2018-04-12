@@ -27,7 +27,6 @@ public class BinasApp {
 				endpoint = new BinasEndpointManager(wsName, wsURL);
 			}
 			
-			//BinasManager.getInstance().setId(wsName);
 
 			System.out.println(BinasApp.class.getSimpleName() + " running");
 
