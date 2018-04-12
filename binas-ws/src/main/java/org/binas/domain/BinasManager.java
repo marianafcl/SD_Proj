@@ -55,7 +55,6 @@ public class BinasManager {
 		if(users.containsKey(email)) {
 			throw new EmailExistsException();
 		}
-		
 		if(b) {
 			User user = new User(email);
 			users.put(email, user);
@@ -112,8 +111,7 @@ public class BinasManager {
 		return max;
 	}
 
-	
-	//TODO: IMPLEMENT THESE:
+
 	
 /** Retrieve List Stations **/
 	
@@ -139,30 +137,50 @@ public class BinasManager {
 	}
 
 	public void returnBina(String email) throws NoBinaRentedException, UserNotExistsException {
-		// TODO Auto-generated method stub
-		
+		User user = users.get(email);
+		if (user == null) {
+			throw new UserNotExistsException();
+		}
+		if (user.getHasBina() == false) {
+			throw new NoBinaRentedException();
+		}
+		user.setHasBina(false);
+		users.put(email, user);
 	}
 
 	public void getBina(String email) throws AlreadyHasBinaException, NoCreditException, UserNotExistsException {
-		// TODO Auto-generated method stub
-		
+		User user = users.get(email);
+		if (user == null) {
+			throw new UserNotExistsException();
+		}
+		if (user.getHasBina() == true) {
+			throw new AlreadyHasBinaException();
+		}
+		if(user.getSaldo() != 0 ) {
+			throw new NoCreditException();
+		}
+		user.setHasBina(true);
+		users.put(email, user);
 	}
 
 	public int getCredit(String email) throws UserNotExistsException {
-		// TODO Auto-generated method stub
-		return 0;
+		User user = users.get(email);
+		if (user == null) {
+			throw new UserNotExistsException();
+		}
+		return user.getSaldo();
 	}
 
 	public void reset() {
-		// TODO Auto-generated method stub
-		
+		users.clear();
+		this.setUserInitialPoints(10);
 	}
 
 	public void init(int userInitialPoints) throws BadInitException {
 		if(this.userInitialPoints < 0) {
 			 throw new BadInitException();
 		}
-		this.userInitialPoints = userInitialPoints;
+		this.setUserInitialPoints(userInitialPoints);
 	}
 	
 	//---------Getters and Setters------------
@@ -171,5 +189,7 @@ public class BinasManager {
 		return this.userInitialPoints;
 	}
 	 
-	
+	public void setUserInitialPoints(int userInitialPoints) {
+		this.userInitialPoints = userInitialPoints;
+	}
 }
