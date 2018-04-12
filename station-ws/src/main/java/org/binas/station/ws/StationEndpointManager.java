@@ -124,6 +124,7 @@ public class StationEndpointManager {
 
 	void publishToUDDI() throws Exception {
 		this.uddiNaming = new UDDINaming(uddiURL);
+		System.out.println(this.uddiNaming);
 		this.uddiNaming.rebind(wsName, wsURL);
 	}
 

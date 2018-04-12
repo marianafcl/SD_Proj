@@ -127,6 +127,7 @@ public class BinasEndpointManager {
 		void publishToUDDI() throws Exception {
 			this.uddiNaming = new UDDINaming(uddiURL);
 			this.uddiNaming.rebind(wsName, wsURL);
+			System.out.println(this.uddiNaming.getUDDIUrl());
 		}
 		
 		void unpublishFromUDDI() {
