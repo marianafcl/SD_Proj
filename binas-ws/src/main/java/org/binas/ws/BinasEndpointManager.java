@@ -141,7 +141,7 @@ public class BinasEndpointManager {
 
 		public Collection<String> listUDDI() {
 			try {
-				return this.uddiNaming.list("%");
+				return this.uddiNaming.list("A48_Station%");
 			}
 			catch(UDDINamingException e) {
 				if (verbose) {
