@@ -124,7 +124,6 @@ public class StationEndpointManager {
 
 	void publishToUDDI() throws Exception {
 		this.uddiNaming = new UDDINaming(uddiURL);
-		System.out.println(this.uddiNaming);
 		this.uddiNaming.rebind(wsName, wsURL);
 	}
 
@@ -132,7 +131,7 @@ public class StationEndpointManager {
 		//TODO
 		// ver onde apanhar a exceçao 
 		try {
-			this.uddiNaming.unbind(uddiURL);
+			this.uddiNaming.unbind(wsName);
 		}catch(UDDINamingException e) {
 			System.out.printf("Caught exception when unpublishing from UDDI: %s%n", e);
 		}

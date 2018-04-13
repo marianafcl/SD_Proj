@@ -179,12 +179,11 @@ public class BinasPortImpl implements BinasPortType {
 	 public String testPing(String inputMessage) {
 		 try {
 			 Collection<String> urls = endpointManager.listUDDI();
-			 StationClient sc = null;
 		 
 			 StringBuilder builder = new StringBuilder();
 		 
 			 for(String s : urls) {
-				 sc = new StationClient(s);
+				 StationClient sc = new StationClient(s);
 				 builder.append(sc.testPing(inputMessage));
 			 }
 		 

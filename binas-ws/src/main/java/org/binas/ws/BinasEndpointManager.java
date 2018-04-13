@@ -134,7 +134,7 @@ public class BinasEndpointManager {
 			//TODO
 			// ver onde apanhar a exceçao 
 			try {
-				this.uddiNaming.unbind(uddiURL);
+				this.uddiNaming.unbind(wsName);
 			}catch(UDDINamingException e) {
 				System.out.printf("Caught exception when unpublishing from UDDI: %s%n", e);
 			}

@@ -40,6 +40,7 @@ public class StationClientApp {
 		String result = client.testPing("client");
 		System.out.print("Result: ");
 		System.out.println(result);
+		
 	}
 
 }
