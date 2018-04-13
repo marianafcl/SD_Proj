@@ -80,7 +80,6 @@ public class StationClient   implements StationPortType {
 		 
 		 service = new StationService();
 		 port = service.getStationPort();
-		 System.out.println(wsURL);
 		 if (wsURL != null) {
 		 if (verbose)
 		 System.out.println("Setting endpoint address ...");
