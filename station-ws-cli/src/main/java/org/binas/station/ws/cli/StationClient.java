@@ -3,7 +3,7 @@ package org.binas.station.ws.cli;
 import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
-
+import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
@@ -22,7 +22,6 @@ import org.binas.station.ws.StationView;
  //TODO implement Port Type interface
 public class StationClient   implements StationPortType {
 
-	private static final String ENDPOINT_ADDRESS_PROPERTY = null;
 
 	/** WS service */
 	 StationService service = null;
@@ -78,16 +77,16 @@ public class StationClient   implements StationPortType {
 	private void createStub() {
 		if (verbose)
 		 System.out.println("Creating stub ...");
-		 //TODO
+		 
 		 service = new StationService();
 		 port = service.getStationPort();
-		
+		 System.out.println(wsURL);
 		 if (wsURL != null) {
-			 if (verbose)
-				System.out.println("Setting endpoint address ...");
-			 BindingProvider bindingProvider = (BindingProvider) port;
-			 Map<String, Object> requestContext = bindingProvider.getRequestContext();
-			 requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
+		 if (verbose)
+		 System.out.println("Setting endpoint address ...");
+		 BindingProvider bindingProvider = (BindingProvider) port;
+		 Map<String, Object> requestContext = bindingProvider.getRequestContext();
+		 requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
 		 }
 	}
 
