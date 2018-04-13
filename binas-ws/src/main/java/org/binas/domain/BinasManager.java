@@ -21,7 +21,7 @@ import org.binas.ws.StationView;
 import org.binas.ws.UserView;
 
 public class BinasManager {
-	private final static String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{1,})$";
+	private final static String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{1,})@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{1,})$";
 	
 	private HashMap<String, User> users = new HashMap<String, User>();
 	private int userInitialPoints = 10;
