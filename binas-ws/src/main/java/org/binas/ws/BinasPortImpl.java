@@ -141,9 +141,13 @@ public class BinasPortImpl implements BinasPortType {
 	 public void rentBina(String stationID, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception,
 	 NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception {
 		StationClient sc;
+		String wsURL = endpointManager.lookUpUDDI(stationID);
+		if (wsURL == null) {
+			throwInvalidStationException("Error: station id is invalid");
+		}
 		try {
 			BinasManager.getInstance().getBina(email);
-			sc = new StationClient(endpointManager.lookUpUDDI(stationID));
+			sc = new StationClient(wsURL);
 			sc.getBina();
 		}
 		catch(AlreadyHasBinaException e) {

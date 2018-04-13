@@ -11,19 +11,13 @@ import org.junit.After;
 import org.junit.Test;
 
 public class GetCregitMethodTest extends BaseIT {
-	private final static String email = "joaquina.bernardina@ist.bah";
 
 	@Test
 	public void success() {
 		int credit;
 		try {
-			UserView userView = client.activateUser(email);
 			credit = client.getCredit(email);
-			assertEquals((int)userView.getCredit(), credit);
-		} catch (EmailExists_Exception e) {
-			fail();
-		} catch (InvalidEmail_Exception e) {
-			fail();
+			assertEquals(10, credit);
 		} catch(UserNotExists_Exception e) {
 			fail();
 		}
@@ -31,19 +25,8 @@ public class GetCregitMethodTest extends BaseIT {
 	
 	@Test(expected = UserNotExists_Exception.class)
 	public void userNotExistsException() throws UserNotExists_Exception {
-		int credit;
-		try {
-			UserView userView = client.activateUser(email);
-			credit = client.getCredit("bunica");
-		} catch (EmailExists_Exception e) {
-			fail();
-		} catch (InvalidEmail_Exception e) {
-			fail();
-		}
+		client.getCredit("bunica");
 	}
 	
-	@After
-	public void clean() {
-		client.testClear();
-	}
+	
 }

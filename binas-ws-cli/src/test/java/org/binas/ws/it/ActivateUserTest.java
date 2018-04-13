@@ -17,6 +17,7 @@ import org.junit.Test;
 
 public class ActivateUserTest extends BaseIT {
 	private final static String email = "joaquina.bernardina@ist.bah";
+	private final static String email1 = "joaquina.bernardino@ist.bah";
 	private static final String TEST_PROP_FILE = "/test.properties";
 	protected static Properties testProps1;
 	protected static BinasClient client1;
@@ -55,9 +56,9 @@ public class ActivateUserTest extends BaseIT {
 	@Test
 	public void success() {
 		try {
-			UserView userView = client.activateUser(email);
+			UserView userView = client.activateUser(email1);
 			
-			assertEquals(email, userView.getEmail());
+			assertEquals(email1, userView.getEmail());
 			assertEquals(10, (int)userView.getCredit());
 		} catch (EmailExists_Exception e) {
 			fail();
@@ -69,8 +70,8 @@ public class ActivateUserTest extends BaseIT {
 	@Test(expected = EmailExists_Exception.class)
 	public void emailExistsException() throws EmailExists_Exception {
 		try {
-			UserView userView = client.activateUser(email);
-			UserView userView1 = client1.activateUser(email);
+			UserView userView = client.activateUser(email1);
+			UserView userView1 = client1.activateUser(email1);
 		} catch (InvalidEmail_Exception e) {
 			fail();
 		}

@@ -7,9 +7,11 @@ import static org.junit.Assert.fail;
 import org.binas.ws.AlreadyHasBina_Exception;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.EmailExists_Exception;
+import org.binas.ws.FullStation_Exception;
 import org.binas.ws.InvalidEmail_Exception;
 import org.binas.ws.InvalidStation_Exception;
 import org.binas.ws.NoBinaAvail_Exception;
+import org.binas.ws.NoBinaRented_Exception;
 import org.binas.ws.NoCredit_Exception;
 import org.binas.ws.StationView;
 import org.binas.ws.UserNotExists_Exception;
@@ -19,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class GetBinaMethodTest extends BaseIT {
-	private final static String email = "joaquina.bernardina@ist.bah";
 	private final static String email1 = "joaquina.bernardin@ist.bah";
 	private final static String email2= "joaquina.bernardi@ist.bah";
 	private final static String email3 = "joaquina.bernard@ist.bah";
@@ -27,17 +28,7 @@ public class GetBinaMethodTest extends BaseIT {
 	private final static String email5 = "joaquina.berna@ist.bah";
 	private final static String email6 = "joaquina.bern@ist.bah";
 	private static final String stationId1 = "A48_Station1";
-	private static final int x1 = 22;
-	private static final int y1 = 7;
-	private static final int capacity1 = 6;
-	private static final int returnPrize1 = 2;
-	private UserView userView;
-	
-	@Before
-	public void setUp() throws BadInit_Exception, EmailExists_Exception, InvalidEmail_Exception {
-		client.testInitStation(stationId1, x1, y1, capacity1, returnPrize1);
-		client.activateUser(email);
-	}
+		
 
 	@Test
 	public void success() {
@@ -62,8 +53,7 @@ public class GetBinaMethodTest extends BaseIT {
 	@Test(expected = InvalidStation_Exception.class)
 	public void invalidStationException() throws InvalidStation_Exception {
 		try {
-			StationView stationView = client.getInfoStation("A48_Station2");
-			client.rentBina(stationId1, email);
+			client.rentBina("ola", email);
 		}catch(UserNotExists_Exception e) {
 			fail();
 		}catch(NoCredit_Exception e) {
@@ -78,7 +68,6 @@ public class GetBinaMethodTest extends BaseIT {
 	@Test(expected = UserNotExists_Exception.class)
 	public void userNotExistsException() throws UserNotExists_Exception {
 		try {
-			StationView stationView = client.getInfoStation(stationId1);
 			client.rentBina(stationId1, "moboy.c@yoyo.yo");
 		}catch(InvalidStation_Exception e) {
 			fail();
@@ -94,8 +83,10 @@ public class GetBinaMethodTest extends BaseIT {
 	@Test(expected = NoCredit_Exception.class)
 	public void noCreditException() throws NoCredit_Exception {
 		try {
-			StationView stationView = client.getInfoStation(stationId1);
-			client.rentBina(stationId1, email);
+			for(int i = 0; i < 11; i++) {
+				client.rentBina(stationId2, email);
+				client.returnBina(stationId2, email);
+			}
 		}catch(InvalidStation_Exception e) {
 			fail();
 		}catch(UserNotExists_Exception e) {
@@ -104,13 +95,16 @@ public class GetBinaMethodTest extends BaseIT {
 			fail();
 		}catch(AlreadyHasBina_Exception e) {
 			fail();
+		}catch(NoBinaRented_Exception e) {
+			fail();
+		}catch(FullStation_Exception e) {
+			fail();
 		}
 	}
 	
 	@Test(expected = NoBinaAvail_Exception.class)
 	public void noBinaAvailException() throws NoBinaAvail_Exception {
 		try {
-			StationView stationView = client.getInfoStation(stationId1);
 			client.activateUser(email1);
 			client.activateUser(email2);
 			client.activateUser(email3);
@@ -142,7 +136,6 @@ public class GetBinaMethodTest extends BaseIT {
 	@Test(expected = AlreadyHasBina_Exception.class)
 	public void alreadyHasBinaException() throws AlreadyHasBina_Exception {
 		try {
-			StationView stationView = client.getInfoStation(stationId1);
 			client.rentBina(stationId1, email);
 			client.rentBina(stationId1, email);
 		}catch(InvalidStation_Exception e) {
@@ -156,8 +149,5 @@ public class GetBinaMethodTest extends BaseIT {
 		}
 	}
 	
-	@After
-	public void clean() {
-		client.testClear();
-	}
+	
 }
