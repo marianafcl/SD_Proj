@@ -5,12 +5,10 @@ public class UserNotExistsException extends Exception {
 
 	public UserNotExistsException() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	public UserNotExistsException(String message) {
 		super(message);
-		// TODO Auto-generated constructor stub
 	}
 	
 }

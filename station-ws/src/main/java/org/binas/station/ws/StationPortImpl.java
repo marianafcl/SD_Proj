@@ -12,7 +12,6 @@ import org.binas.station.domain.exception.NoSlotAvailException;
  * This class implements the Web Service port type (interface). The annotations
  * below "map" the Java class to the WSDL definitions.
  */
- //TODO
  @WebService(endpointInterface = "org.binas.station.ws.StationPortType",
 wsdlLocation = "station.wsdl",
 name ="StationWebService",

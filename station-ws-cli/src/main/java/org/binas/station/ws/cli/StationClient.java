@@ -18,8 +18,6 @@ import org.binas.station.ws.StationView;
  * wsimport.
  */
 
-
- //TODO implement Port Type interface
 public class StationClient   implements StationPortType {
 
 

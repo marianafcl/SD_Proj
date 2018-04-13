@@ -86,7 +86,6 @@ public class BinasClient implements BinasPortType {
 		 System.out.println("Creating stub ...");
 		 service = new BinasService();
 		 port = service.getBinasPort();
-		//TODO
 		 if (wsURL != null) {
 		 if (verbose)
 		 System.out.println("Setting endpoint address ...");

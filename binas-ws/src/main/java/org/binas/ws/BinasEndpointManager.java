@@ -131,8 +131,6 @@ public class BinasEndpointManager {
 		}
 		
 		void unpublishFromUDDI() {
-			//TODO
-			// ver onde apanhar a exceçao 
 			try {
 				this.uddiNaming.unbind(wsName);
 			}catch(UDDINamingException e) {
