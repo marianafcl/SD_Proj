@@ -144,6 +144,7 @@ public class BinasManager {
 		if (user.getHasBina() == false) {
 			throw new NoBinaRentedException();
 		}
+		user.setSaldo(user.getSaldo() - 1);
 		user.setHasBina(false);
 		users.put(email, user);
 	}
@@ -156,7 +157,7 @@ public class BinasManager {
 		if (user.getHasBina() == true) {
 			throw new AlreadyHasBinaException();
 		}
-		if(user.getSaldo() != 0 ) {
+		if(user.getSaldo() == 0 ) {
 			throw new NoCreditException();
 		}
 		user.setHasBina(true);

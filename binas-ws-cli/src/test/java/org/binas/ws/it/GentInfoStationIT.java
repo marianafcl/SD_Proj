@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.InvalidStation_Exception;
 import org.binas.ws.StationView;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -78,6 +79,11 @@ public class GentInfoStationIT extends BaseIT{
 	@Test(expected = InvalidStation_Exception.class)
 	public void getInfoStationNoStationID() throws InvalidStation_Exception {
 		client.getInfoStation("NonExistentName");
+	}
+	
+	@After
+	public void clean() {
+		client.testClear();
 	}
 	
 }

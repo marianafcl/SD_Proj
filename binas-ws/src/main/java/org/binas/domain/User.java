@@ -35,5 +35,3 @@ public class User {
 		this.hasBina = hasBina;
 	}
 }
-
-

@@ -204,6 +204,19 @@ public class BinasPortImpl implements BinasPortType {
 	 @Override
 	 public void testClear() {
 		 BinasManager.getInstance().reset();
+		 try {
+			 Collection<String> urls = endpointManager.listUDDI();
+		 
+			 for(String s : urls) {
+				 StationClient sc = new StationClient(s);
+				 sc.testClear();
+			 }
+		 
+		 }
+		 catch(StationClientException e) {
+			 System.out.printf("Caught exception when stopping: %s%n", e);
+
+		 }
 	 }
 	
 	 /** Set station variables with specific values. */
