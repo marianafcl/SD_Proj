@@ -119,26 +119,22 @@ public class BinasManager {
 	public synchronized List<StationView> listStations(List<StationView> stations, int k, CoordinatesView coordinates) {
 		List<StationView> closestStations = new ArrayList<StationView>();
 		int maxDist = 0;
-		System.out.printf("Closest Stations: ");
 		for (StationView station : stations) {
-			/*if(closestStations.size() > k) {
+			if(closestStations.size() > k) {
 				if(maxDist > this.distance(station.getCoordinate(), coordinates)) {
 					closestStations = this.remove(closestStations, coordinates);
 					closestStations.add(station);
 					maxDist = this.max(closestStations, coordinates);
 				}
 			}
-			else {*/
+			else {
 				closestStations.add(station);
-				System.out.printf("Closest Stations: %s", station.getId());
 				if (maxDist < this.distance(station.getCoordinate(), coordinates)) {
 					maxDist = this.distance(station.getCoordinate(), coordinates);
-				//}
+				}
 			}
 		}
-		for(StationView station : closestStations) {
-			System.out.printf("Closest Stations: %s", station.getId());
-		}
+		
 		return closestStations;
 	}
 
