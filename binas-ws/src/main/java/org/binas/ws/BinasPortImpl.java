@@ -17,7 +17,6 @@ import org.binas.domain.exception.UserNotExistsException;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
 
-
 /**
  * This class implements the Web Service port type (interface). The annotations
  * below "map" the Java class to the WSDL definitions.
@@ -219,6 +218,19 @@ public class BinasPortImpl implements BinasPortType {
 	 @Override
 	 public void testClear() {
 		 BinasManager.getInstance().reset();
+		 try {
+			 Collection<String> urls = endpointManager.listUDDI();
+		 
+			 for(String s : urls) {
+				 StationClient sc = new StationClient(s);
+				 sc.testClear();
+			 }
+		 
+		 }
+		 catch(StationClientException e) {
+			 System.out.printf("Caught exception when stopping: %s%n", e);
+
+		 }
 	 }
 	
 	 /** Set station variables with specific values. */
