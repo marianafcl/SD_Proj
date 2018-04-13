@@ -39,7 +39,6 @@ public class StationPortImpl implements StationPortType {
 	 @Override
 	 public StationView getInfo() {
      return buildStationView(Station.getInstance());
-	 //return null;
 	 }
 	
 	 /** Return a bike to the station. */

@@ -17,6 +17,8 @@ import org.binas.domain.exception.UserNotExistsException;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
 
+import com.ctc.wstx.io.WstxInputSource;
+
 /**
  * This class implements the Web Service port type (interface). The annotations
  * below "map" the Java class to the WSDL definitions.
@@ -68,15 +70,20 @@ public class BinasPortImpl implements BinasPortType {
 	 
 	 /** Retrieve station. */
 	 @Override
-	 public StationView getInfoStation(String url) throws InvalidStation_Exception {
+	 public StationView getInfoStation(String stationID) throws InvalidStation_Exception {
 		StationClient sc = null;
 		StationView sv = new StationView();
-		 
+		
+		String wsURL = endpointManager.lookUpUDDI(stationID);
+		if (wsURL == null) {
+			throwInvalidStationException("Error: Invalid station");
+		}
 		try {
-			sc = new StationClient(url);
+			sc = new StationClient(wsURL);
 		} catch (StationClientException e) {
 			throwInvalidStationException("Error: Invalid station");
 		}
+		
 		
 		CoordinatesView cv = new CoordinatesView();
 		cv.setX(sc.getInfo().getCoordinate().getX());
