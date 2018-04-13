@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
 
+import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
+
 import org.binas.ws.AlreadyHasBina_Exception;
 import org.binas.ws.BadInit_Exception;
 import org.binas.ws.BinasPortType;
@@ -90,7 +92,7 @@ public class BinasClient implements BinasPortType {
 		 System.out.println("Setting endpoint address ...");
 		 BindingProvider bindingProvider = (BindingProvider) port;
 		 Map<String, Object> requestContext = bindingProvider.getRequestContext();
-		 requestContext.put(/*ENDPOINT_ADDRESS_PROPERTY*/null, wsURL);
+		 requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
 		 }
     }
 
