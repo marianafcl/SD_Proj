@@ -17,7 +17,6 @@ import org.binas.domain.exception.UserNotExistsException;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
 
-import com.ctc.wstx.io.WstxInputSource;
 
 /**
  * This class implements the Web Service port type (interface). The annotations
@@ -55,14 +54,28 @@ public class BinasPortImpl implements BinasPortType {
 			 Collection<String> urls = endpointManager.listUDDI();
 		 
 			 for(String s : urls) {
-				 stations.add(getInfoStation(s));
+				StationView sv = new StationView();
+				StationClient sc = new StationClient(s);
+	
+				CoordinatesView cv = new CoordinatesView();
+				cv.setX(sc.getInfo().getCoordinate().getX());
+				cv.setY(sc.getInfo().getCoordinate().getY());
+				
+				sv.setAvailableBinas(sc.getInfo().getAvailableBinas());
+				sv.setCapacity(sc.getInfo().getCapacity());
+				sv.setCoordinate(cv);
+				sv.setFreeDocks(sc.getInfo().getFreeDocks());
+				sv.setId(sc.getInfo().getId());
+				sv.setTotalGets(sc.getInfo().getTotalGets());
+				sv.setTotalReturns(sc.getInfo().getTotalReturns());
+				stations.add(sv);
 			 }
 		 
-			 stations = BinasManager.getInstance().listStations(stations, numberOfStations, coordinates);		 
+			 //stations = BinasManager.getInstance().listStations(stations, numberOfStations, coordinates);		 
 		 
 			 return stations;
 		 }
-		 catch(InvalidStation_Exception e) {
+		 catch(StationClientException e) {
 			 System.out.printf("Caught exception when stopping: %s%n", e);
 			 return null;
 		 }
