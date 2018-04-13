@@ -17,8 +17,6 @@ import org.binas.domain.exception.UserNotExistsException;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
 
-import com.ctc.wstx.io.WstxInputSource;
-
 /**
  * This class implements the Web Service port type (interface). The annotations
  * below "map" the Java class to the WSDL definitions.
