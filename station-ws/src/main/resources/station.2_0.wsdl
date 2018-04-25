@@ -36,7 +36,35 @@
                     <xs:element name="freeDocks" type="xs:int" />
                 </xs:sequence>
             </xs:complexType>
-
+            
+			 <!-- GetBalance  -->
+			<xs:complexType name="getBalance">
+				<xs:sequence>
+					<xs:element name="email" type="xs:string"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="getBalance" type="tns:getBalance"/>
+			<xs:complexType name="getBalanceResponse">
+				<xs:sequence>
+					<xs:element name="credit" type="xs:int"/>
+					<xs:element name="tag" type="xs:string"/>
+				</xs:sequence>
+			</xs:complexType>
+			<!-- SetBalance -->
+			<xs:complexType name="setBalance">
+				<xs:sequence>
+					<xs:element name="email" type="xs:string"/>
+					<xs:element name="credit" type="xs:int"/>
+					<xs:element name="tag" type="xs:string"/>
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="setBalance" type="tns:setBalance"/>
+			<xs:complexType name="setBalanceResponse">
+				<xs:sequence/>
+			</xs:complexType>
+			<xs:element name="setBalanceResponse" type="tns:setBalanceResponse"/>
+            
+            
             <xs:complexType name="getInfo">
                 <xs:sequence />
             </xs:complexType>
@@ -141,6 +169,22 @@
     <!-- Messages (use elements defined in the schema) -->
 
     <!-- main service messages -->
+    <!-- GetBalance -->
+    <message name="getBalance">
+        <part name="parameters" element="tns:getBalance" />
+    </message>
+    <message name="getBalanceResponse">
+        <part name="parameters" element="tns:getBalanceResponse" />
+    </message>
+    
+    <!-- SetBalance -->
+    <message name="setBalance">
+        <part name="parameters" element="tns:setBalance" />
+    </message>
+    <message name="setBalanceResponse">
+        <part name="parameters" element="tns:setBalanceResponse" />
+    </message>
+    
     <message name="getInfo">
         <part name="parameters" element="tns:getInfo" />
     </message>
@@ -199,6 +243,22 @@
     <!-- Port Type (Interface) -->
     <portType name="StationPortType">
         <!-- main service operations -->
+        <!-- getBalance -->
+        <operation name="getBalance">
+            <input wsam:Action="http://ws.station.binas.org/Station/getBalanceRequest"
+                message="tns:getBalance" />
+            <output wsam:Action="http://ws.station.binas.org/Station/getBalanceResponse"
+                message="tns:getBalanceResponse" />
+        </operation>
+        
+        <!-- setBalance -->
+        <operation name="setBalance">
+            <input wsam:Action="http://ws.station.binas.org/Station/setBalanceRequest"
+                message="tns:setBalance" />
+            <output wsam:Action="http://ws.station.binas.org/Station/setBalanceResponse"
+                message="tns:setBalanceResponse" />
+        </operation>
+        
         <operation name="getInfo">
             <input wsam:Action="http://ws.station.binas.org/Station/getInfoRequest"
                 message="tns:getInfo" />
