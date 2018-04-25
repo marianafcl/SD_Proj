@@ -1,211 +1,99 @@
 package org.binas.station.ws.it;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
+import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.CoordinatesView;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
+import org.binas.station.ws.StationView;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
+/**
+ * Test suite
+ */
 public class GetInfoIT extends BaseIT {
+	private final static int X = 5;
+	private final static int Y = 5;
+	private final static int CAPACITY = 20;
+	private final static int RETURN_PRIZE = 0;
 		
-	@Test
-	public void successOneClient() {
-		try {
-			assertEquals(22, client.getInfo().getCoordinate().getX());
-			assertEquals(7, client.getInfo().getCoordinate().getY());
-			assertEquals(6, client.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client.getBina();
-			}
-			for(int i = 0;  i < 4; i++) {
-				client.returnBina();
-			}
-			
-			assertEquals(4, client.getInfo().getAvailableBinas());
-			assertEquals(2, client.getInfo().getFreeDocks());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-		catch(NoSlotAvail_Exception e) { fail(); }
-	}
+	// static members
 	
-	@Test
-	public void successTwoClients() {
-		try {
-			assertEquals(22, client.getInfo().getCoordinate().getX());
-			assertEquals(7, client.getInfo().getCoordinate().getY());
-			assertEquals(6, client.getInfo().getCapacity());
-			
-			assertEquals(22, client1.getInfo().getCoordinate().getX());
-			assertEquals(7, client1.getInfo().getCoordinate().getY());
-			assertEquals(6, client1.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client.getBina();
-			}
-			for(int i = 0;  i < 4; i++) {
-				client.returnBina();
-			}
-			
-			assertEquals(4, client.getInfo().getAvailableBinas());
-			assertEquals(2, client.getInfo().getFreeDocks());
-			
-			assertEquals(4, client1.getInfo().getAvailableBinas());
-			assertEquals(2, client1.getInfo().getFreeDocks());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-		catch(NoSlotAvail_Exception e) { fail(); }
+	// one-time initialization and clean-up
+	@BeforeClass
+	public static void oneTimeSetUp() {
 	}
-	
-	@Test
-	public void successThreeStations() {
-		try {
-			assertEquals(22, client1.getInfo().getCoordinate().getX());
-			assertEquals(7, client1.getInfo().getCoordinate().getY());
-			assertEquals(6, client1.getInfo().getCapacity());
-			
-			assertEquals(80, client2.getInfo().getCoordinate().getX());
-			assertEquals(20, client2.getInfo().getCoordinate().getY());
-			assertEquals(12, client2.getInfo().getCapacity());
-			
-			assertEquals(50, client3.getInfo().getCoordinate().getX());
-			assertEquals(50, client3.getInfo().getCoordinate().getY());
-			assertEquals(20, client3.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client1.getBina();
-				client2.getBina();
-				client3.getBina();
-			}
-			for(int i = 0;  i < 6; i++) {
-				client1.returnBina();
-				client2.returnBina();
-				client3.returnBina();
-			}
-			
-			assertEquals(6, client1.getInfo().getAvailableBinas());
-			assertEquals(0, client1.getInfo().getFreeDocks());
-			
-			assertEquals(12, client2.getInfo().getAvailableBinas());
-			assertEquals(0, client2.getInfo().getFreeDocks());
-			
-			assertEquals(20, client3.getInfo().getAvailableBinas());
-			assertEquals(0, client3.getInfo().getFreeDocks());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-		catch(NoSlotAvail_Exception e) { fail(); }
+
+	@AfterClass
+	public static void oneTimeTearDown() {
 	}
-	
-	@Test
-	public void success() {
-		try {
-			assertEquals(22, client1.getInfo().getCoordinate().getX());
-			assertEquals(7, client1.getInfo().getCoordinate().getY());
-			assertEquals(6, client1.getInfo().getCapacity());
-			
-			assertEquals(80, client2.getInfo().getCoordinate().getX());
-			assertEquals(20, client2.getInfo().getCoordinate().getY());
-			assertEquals(12, client2.getInfo().getCapacity());
-			
-			assertEquals(50, client3.getInfo().getCoordinate().getX());
-			assertEquals(50, client3.getInfo().getCoordinate().getY());
-			assertEquals(20, client3.getInfo().getCapacity());
-			
-			assertEquals(6, client1.getInfo().getAvailableBinas());
-			assertEquals(0, client1.getInfo().getFreeDocks());
-			
-			assertEquals(12, client2.getInfo().getAvailableBinas());
-			assertEquals(0, client2.getInfo().getFreeDocks());
-			
-			assertEquals(20, client3.getInfo().getAvailableBinas());
-			assertEquals(0, client3.getInfo().getFreeDocks());
-			
-			for(int i = 0; i < 6; i++) {
-				client1.getBina();
-				client2.getBina();
-				client3.getBina();
-			}
-			for(int i = 0; i < 6; i++) {
-				client2.getBina();
-				client3.getBina();
-			}
-			for(int i = 0; i < 8; i++) {
-				client3.getBina();
-			}
-			
-			assertEquals(0, client1.getInfo().getAvailableBinas());
-			assertEquals(6, client1.getInfo().getFreeDocks());
-			
-			assertEquals(0, client2.getInfo().getAvailableBinas());
-			assertEquals(12, client2.getInfo().getFreeDocks());
-			
-			assertEquals(0, client3.getInfo().getAvailableBinas());
-			assertEquals(20, client3.getInfo().getFreeDocks());
-			
-			for(int i = 0; i < 9; i++) {
-				client2.returnBina();
-				client3.returnBina();
-			}
-			client1.returnBina();
-			
-			assertEquals(1, client1.getInfo().getAvailableBinas());
-			assertEquals(5, client1.getInfo().getFreeDocks());
-			
-			assertEquals(9, client2.getInfo().getAvailableBinas());
-			assertEquals(3, client2.getInfo().getFreeDocks());
-			
-			assertEquals(9, client3.getInfo().getAvailableBinas());
-			assertEquals(11, client3.getInfo().getFreeDocks());
-			
-			for(int i = 0; i < 9; i++) {
-				client2.getBina();
-				client3.getBina();
-			}
-			client1.getBina();
-			
-			assertEquals(0, client1.getInfo().getAvailableBinas());
-			assertEquals(6, client1.getInfo().getFreeDocks());
-			
-			assertEquals(0, client2.getInfo().getAvailableBinas());
-			assertEquals(12, client2.getInfo().getFreeDocks());
-			
-			assertEquals(0, client3.getInfo().getAvailableBinas());
-			assertEquals(20, client3.getInfo().getFreeDocks());
-			
-			for(int i = 0;  i < 6; i++) {
-				client1.returnBina();
-				client2.returnBina();
-				client3.returnBina();
-			}
-			for(int i = 0; i < 6; i++) {
-				client2.returnBina();
-				client3.returnBina();
-			}
-			for(int i = 0; i < 8; i++) {
-				client3.returnBina();
-			}
-			
-			assertEquals(6, client1.getInfo().getAvailableBinas());
-			assertEquals(0, client1.getInfo().getFreeDocks());
-			
-			assertEquals(12, client2.getInfo().getAvailableBinas());
-			assertEquals(0, client2.getInfo().getFreeDocks());
-			
-			assertEquals(20, client3.getInfo().getAvailableBinas());
-			assertEquals(0, client3.getInfo().getFreeDocks());
-			
-			assertEquals(7, client1.getInfo().getTotalGets());
-			assertEquals(7, client1.getInfo().getTotalReturns());
-			
-			assertEquals(21, client2.getInfo().getTotalGets());
-			assertEquals(21, client2.getInfo().getTotalReturns());
-			
-			assertEquals(29, client3.getInfo().getTotalGets());
-			assertEquals(29, client3.getInfo().getTotalReturns());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-		catch(NoSlotAvail_Exception e) { fail(); }
+
+	// members
+
+	// initialization and clean-up for each test
+	@Before
+	public void setUp() throws BadInit_Exception {
+		client.testClear();
+		client.testInit(X, Y, CAPACITY, RETURN_PRIZE);
 	}
-	
+
+	@After
+	public void tearDown() {
+	}
+
+	@Test
+	public void getInfoValidTest() {
+		StationView view = client.getInfo();
+		
+		assertNotNull(view);
+		assertEquals(CAPACITY, view.getAvailableBinas());
+		assertEquals(CAPACITY, view.getCapacity());
+		assertEquals(X, view.getCoordinate().getX());
+		assertEquals(Y, view.getCoordinate().getY());
+		assertEquals(0, view.getFreeDocks());
+		assertEquals(0, view.getTotalGets());
+		assertEquals(0, view.getTotalReturns());
+		assertTrue(view.getId().matches("[ATC][0-9X][0-9X]_Station[0-9]"));
+	}
+
+	/**
+	 * Test to assert that the station correctly stores the number of gets.
+	 */
+	@Test
+	public void getInfoGetBinaTest() throws BadInit_Exception, NoBinaAvail_Exception, NoSlotAvail_Exception {
+		client.getBina();
+
+		StationView view = client.getInfo();
+		assertNotNull(view);
+
+		assertEquals(CAPACITY - 1, view.getAvailableBinas());
+		assertEquals(1, view.getTotalGets());
+		assertEquals(1, view.getFreeDocks());
+	}
+
+	/**
+	 * Test to assert that the station correctly stores the number of binas
+	 * returned.
+	 */
+	@Test
+	public void getInfoReturnBinaTest() throws BadInit_Exception, NoBinaAvail_Exception, NoSlotAvail_Exception {
+		client.getBina();
+		client.returnBina();
+
+		StationView view = client.getInfo();
+		assertNotNull(view);
+
+		assertEquals(CAPACITY, view.getAvailableBinas());
+		assertEquals(1, view.getTotalGets());
+		assertEquals(1, view.getTotalReturns());
+		assertEquals(0, view.getFreeDocks());
+	}
+
 }

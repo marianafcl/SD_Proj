@@ -1,134 +1,80 @@
 package org.binas.station.ws.it;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotNull;
 
+import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.NoBinaAvail_Exception;
+import org.binas.station.ws.StationView;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * class that tests Bina retrieval
+ */
 public class GetBinaIT extends BaseIT {
- 
-	@Test
-	public void successFewBinasLeft() {
-		try {
-			assertEquals(6, client.getInfo().getCapacity());
-			
-			for(int i = 0; i < 3; i++) {
-				client.getBina();
-			}
-			
-			assertEquals(3, client.getInfo().getAvailableBinas());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-	}
-	
-	@Test
-	public void successNoBinasLeft() {
-		try {
-			assertEquals(6, client.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client.getBina();
-			}
-			
-			assertEquals(0, client.getInfo().getAvailableBinas());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-	}
-	
-	@Test(expected = NoBinaAvail_Exception.class)
-	public void failNoBinasLeft() throws NoBinaAvail_Exception {
-		assertEquals(6, client.getInfo().getCapacity());
+	private final static int X = 5;
+	private final static int Y = 5;
+	private final static int CAPACITY = 20;
+	private final static int RETURN_PRIZE = 0;
+	// static members
+
+	// one-time initialization and clean-up
+	@BeforeClass
+	public static void oneTimeSetUp() {
 		
-		for(int i = 0; i < 6; i++) {
-			client.getBina();
-		}
-			
+	}
+
+	@AfterClass
+	public static void oneTimeTearDown() {
+	}
+
+	// members
+
+	// initialization and clean-up for each test
+	@Before
+	public void setUp() throws BadInit_Exception {
+		client.testClear();
+		client.testInit(X, Y, CAPACITY, RETURN_PRIZE);
+	}
+
+	@After
+	public void tearDown() {
+	}
+
+	// main tests
+	// assertEquals(expected, actual);
+
+	/** Try to get a Bina , get one verify, one rented (less). */
+	@Test
+	public void getBinaOneTest() throws NoBinaAvail_Exception, BadInit_Exception {
 		client.getBina();
+
+		StationView view = client.getInfo();
+		assertNotNull(view);
+		assertEquals(CAPACITY - 1, view.getAvailableBinas());
 	}
 	
 	@Test
-	public void successTwoClientsOneStation() {
-		try {
-			assertEquals(6, client.getInfo().getCapacity());
-			assertEquals(6, client1.getInfo().getCapacity());
-			
-			for(int i = 0; i < 3; i++) {
-				client.getBina();
-				client1.getBina();
-			}
-			
-			assertEquals(0, client.getInfo().getAvailableBinas());
-			assertEquals(0, client1.getInfo().getAvailableBinas());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-	}
-	
-	@Test(expected = NoBinaAvail_Exception.class)
-	public void failTwoClientsOneStation() throws NoBinaAvail_Exception {
-		assertEquals(6, client.getInfo().getCapacity());
-		assertEquals(6, client1.getInfo().getCapacity());
-			
-		for(int i = 0; i < 6; i++) {
+	public void getBinaAllTest() throws NoBinaAvail_Exception, BadInit_Exception {
+		for(int i = 0; i < CAPACITY; i++)
 			client.getBina();
-		}
-			
-		client1.getBina();
+
+		StationView view = client.getInfo();
+		assertNotNull(view);
+		assertEquals(0, view.getAvailableBinas());
 	}
 	
-	@Test
-	public void successTwoStations() {
-		try {
-			assertEquals(6, client1.getInfo().getCapacity());
-			assertEquals(12, client2.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client1.getBina();
-				client2.getBina();
-			}
-			
-			assertEquals(0, client1.getInfo().getAvailableBinas());
-			assertEquals(6, client2.getInfo().getAvailableBinas());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-	}
-	
+	/** Try to get a Bina but no Binas available. */
 	@Test(expected = NoBinaAvail_Exception.class)
-	public void failTwoStations() throws NoBinaAvail_Exception {
-		try {
-			assertEquals(6, client1.getInfo().getCapacity());
-			assertEquals(12, client2.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client1.getBina();
-				client2.getBina();
-			}
-			
-			assertEquals(6, client2.getInfo().getAvailableBinas());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-		
-		client.getBina();
+	public void getBinaNoBinaTest() throws NoBinaAvail_Exception, BadInit_Exception {
+		for(int i = 0; i <= CAPACITY; i++)
+			client.getBina();
 	}
+
 	
-	@Test
-	public void successThreeStations() {
-		try {
-			assertEquals(6, client1.getInfo().getCapacity());
-			assertEquals(12, client2.getInfo().getCapacity());
-			assertEquals(20, client3.getInfo().getCapacity());
-			
-			for(int i = 0; i < 6; i++) {
-				client1.getBina();
-				client2.getBina();
-				client3.getBina();
-			}
-			
-			assertEquals(0, client1.getInfo().getAvailableBinas());
-			assertEquals(6, client2.getInfo().getAvailableBinas());
-			assertEquals(14, client3.getInfo().getAvailableBinas());
-		}
-		catch(NoBinaAvail_Exception e) { fail(); }
-	}
-	
+
 }

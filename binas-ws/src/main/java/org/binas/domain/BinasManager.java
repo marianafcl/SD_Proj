@@ -2,35 +2,43 @@ package org.binas.domain;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.binas.domain.exception.AlreadyHasBinaException;
 import org.binas.domain.exception.BadInitException;
-import org.binas.domain.exception.EmailExistsException;
+import org.binas.domain.exception.InsufficientCreditsException;
 import org.binas.domain.exception.InvalidEmailException;
-import org.binas.domain.exception.NoBinaRentedException;
-import org.binas.domain.exception.NoCreditException;
-import org.binas.domain.exception.UserNotExistsException;
-import org.binas.ws.BadInit;
-import org.binas.ws.BadInit_Exception;
-import org.binas.ws.CoordinatesView;
+import org.binas.domain.exception.StationNotFoundException;
+import org.binas.domain.exception.UserAlreadyExistsException;
+import org.binas.domain.exception.UserAlreadyHasBinaException;
+import org.binas.domain.exception.UserHasNoBinaException;
+import org.binas.domain.exception.UserNotFoundException;
+import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.NoBinaAvail_Exception;
+import org.binas.station.ws.NoSlotAvail_Exception;
+import org.binas.station.ws.cli.StationClient;
+import org.binas.station.ws.cli.StationClientException;
 import org.binas.ws.StationView;
-import org.binas.ws.UserView;
 
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDIRecord;
+
+/**
+ * BinasManager class 
+ * 
+ * Class that have the methods used to get/Return Bina, beginning a station, querying all stations, etc.
+ *
+ */
 public class BinasManager {
-	private final static String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*(\\.[A-Za-z]{1,})@" + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{1,})$";
-	
-	private HashMap<String, User> users = new HashMap<String, User>();
-	private int userInitialPoints = 10;
-	
-	public Pattern pattern;
-	public Matcher matcher;
+	/**
+	 * UDDI server URL
+	 */
+	private String uddiURL = null;
 
-	
+	/**
+	 * Station name
+	 */
+	private String stationTemplateName = null;
 
 	// Singleton -------------------------------------------------------------
 
@@ -48,151 +56,145 @@ public class BinasManager {
 	public static synchronized BinasManager getInstance() {
 		return SingletonHolder.INSTANCE;
 	}
+
+	// Binas Logic ----------------------------------------------------------
+
+	public User createUser(String email) throws UserAlreadyExistsException, InvalidEmailException {
+		return UsersManager.getInstance().RegisterNewUser(email);
+	}
+
+	public User getUser(String email) throws UserNotFoundException {
+		return UsersManager.getInstance().getUser(email);
+	}
 	
-	
-	/**ActivateUser Method **/
-	public synchronized UserView activateUser(String email) throws EmailExistsException, InvalidEmailException {
-		boolean b = verifyEmail(email);
-		if(users.containsKey(email)) {
-			throw new EmailExistsException();
-		}
-		if(b) {
-			User user = new User(email);
-			users.put(email, user);
-		
-			UserView userView = new UserView();
-		
-			userView.setEmail(email);
-			userView.setHasBina(user.getHasBina());
-			userView.setCredit(user.getSaldo());
+	public void rentBina(String stationId, String email) throws UserNotFoundException, InsufficientCreditsException, UserAlreadyHasBinaException, StationNotFoundException, NoBinaAvail_Exception {
+		User user = getUser(email);
+		synchronized (user) {
+			//validate user can rent
+			user.validateCanRentBina();
+
+			//validate station can rent
+			StationClient stationCli = getStation(stationId);
+			stationCli.getBina();
 			
-			return userView;
+			//apply rent action to user
+			user.effectiveRent();
 		}
-		else {
-			throw new InvalidEmailException();
-		}	
 	}
 	
-	
-	private boolean verifyEmail(String email) {
-		pattern = Pattern.compile(EMAIL_PATTERN);
-		matcher = pattern.matcher(email);
-		return matcher.matches();
-	}
-
-
-	/**Calculates Distance **/
-	public int distance (CoordinatesView coordinate, CoordinatesView coordinateUser) {
-		return (int) Math.sqrt((coordinate.getX()-coordinateUser.getX())^2 + (coordinate.getY() - coordinateUser.getY())^2);
-	}
-	
-	/**Bigger distance **/
-	public List<StationView> remove(List<StationView> stations, CoordinatesView coordinates) {
-		int max = 0;
-		StationView stationAux = stations.get(0);
-		for (StationView station : stations) {
-			if(max < this.distance(station.getCoordinate(), coordinates)) {
-				max = this.distance(station.getCoordinate(), coordinates);
-				stationAux = station;
-			}
-		}
-		stations.remove(stationAux);
-		return stations;
-	}
-	
-	/** MaxDistance **/
-	public int max(List<StationView> stations, CoordinatesView coordinates) {
-		int max = 0;
-		for (StationView station : stations) {
-			if(max < this.distance(station.getCoordinate(), coordinates)) {
-				max = this.distance(station.getCoordinate(), coordinates);
-				
-			}
-		}
-		return max;
+	public void returnBina(String stationId, String email) throws UserNotFoundException, NoSlotAvail_Exception, UserHasNoBinaException, StationNotFoundException {
+		User user = getUser(email);
+		synchronized (user) {
+			//validate user can rent
+			user.validateCanReturnBina();
+			
+			//validate station can rent
+			StationClient stationCli = getStation(stationId);
+			int prize = stationCli.returnBina();
+			
+			//apply rent action to user
+			user.effectiveReturn(prize);
+		}		
 	}
 
+	public StationClient getStation(String stationId) throws StationNotFoundException {
 
-	
-/** Retrieve List Stations **/
-	
-	public synchronized List<StationView> listStations(List<StationView> stations, int k, CoordinatesView coordinates) {
-		List<StationView> closestStations = new ArrayList<StationView>();
-		int maxDist = 0;
-		for (StationView station : stations) {
-			if(closestStations.size() > k) {
-				if(maxDist > this.distance(station.getCoordinate(), coordinates)) {
-					closestStations = this.remove(closestStations, coordinates);
-					closestStations.add(station);
-					maxDist = this.max(closestStations, coordinates);
+		Collection<String> stations = this.getStations();
+		String uddiUrl = BinasManager.getInstance().getUddiURL();
+		
+		for (String s : stations) {
+			try {
+				StationClient sc = new StationClient(uddiUrl, s);
+				org.binas.station.ws.StationView sv = sc.getInfo();
+				String idToCompare = sv.getId();
+				if (idToCompare.equals(stationId)) {
+					return sc;
 				}
-			}
-			else {
-				closestStations.add(station);
-				if (maxDist < this.distance(station.getCoordinate(), coordinates)) {
-					maxDist = this.distance(station.getCoordinate(), coordinates);
-				}
+			} catch (StationClientException e) {
+				continue;
 			}
 		}
 		
-		return closestStations;
+		throw new StationNotFoundException();
+	}
+	
+	
+	// UDDI ------------------------------------------------------------------
+
+	public void initUddiURL(String uddiURL) {
+		setUddiURL(uddiURL);
 	}
 
-	public void returnBina(String email) throws NoBinaRentedException, UserNotExistsException {
-		User user = users.get(email);
-		if (user == null) {
-			throw new UserNotExistsException();
-		}
-		if (user.getHasBina() == false) {
-			throw new NoBinaRentedException();
-		}
-		user.setSaldo(user.getSaldo() - 1);
-		user.setHasBina(false);
-		users.put(email, user);
+	public void initStationTemplateName(String stationTemplateName) {
+		setStationTemplateName(stationTemplateName);
 	}
 
-	public void getBina(String email) throws AlreadyHasBinaException, NoCreditException, UserNotExistsException {
-		User user = users.get(email);
-		if (user == null) {
-			throw new UserNotExistsException();
-		}
-		if (user.getHasBina() == true) {
-			throw new AlreadyHasBinaException();
-		}
-		if(user.getSaldo() == 0 ) {
-			throw new NoCreditException();
-		}
-		user.setHasBina(true);
-		users.put(email, user);
+	public String getUddiURL() {
+		return uddiURL;
 	}
 
-	public int getCredit(String email) throws UserNotExistsException {
-		User user = users.get(email);
-		if (user == null) {
-			throw new UserNotExistsException();
+	private void setUddiURL(String url) {
+		uddiURL = url;
+	}
+
+	private void setStationTemplateName(String sn) {
+		stationTemplateName = sn;
+	}
+
+	public String getStationTemplateName() {
+		return stationTemplateName;
+	}
+
+	/**
+	 * Get list of stations for a given query
+	 * 
+	 * @return List of stations
+	 */
+	public Collection<String> getStations() {
+		Collection<UDDIRecord> records = null;
+		Collection<String> stations = new ArrayList<String>();
+		try {
+			UDDINaming uddi = new UDDINaming(uddiURL);
+			records = uddi.listRecords(stationTemplateName + "%");
+			for (UDDIRecord u : records)
+				stations.add(u.getOrgName());
+		} catch (UDDINamingException e) {
 		}
-		return user.getSaldo();
+		return stations;
 	}
 
 	public void reset() {
-		users.clear();
-		this.setUserInitialPoints(10);
+		UsersManager.getInstance().reset();
 	}
 
 	public void init(int userInitialPoints) throws BadInitException {
-		if(this.userInitialPoints < 0) {
-			 throw new BadInitException();
+		if(userInitialPoints < 0) {
+			throw new BadInitException();
 		}
-		this.setUserInitialPoints(userInitialPoints);
+		UsersManager.getInstance().init(userInitialPoints);
 	}
-	
-	//---------Getters and Setters------------
-	
-	public int getUserInitialPoints() {
-		return this.userInitialPoints;
-	}
-	 
-	public void setUserInitialPoints(int userInitialPoints) {
-		this.userInitialPoints = userInitialPoints;
+
+	/**
+	 * 
+	 * Inits a Station with a determined ID, coordinates, capacity and returnPrize
+	 * 
+	 * @param stationId
+	 * @param x
+	 * @param y
+	 * @param capacity
+	 * @param returnPrize
+	 * @throws BadInitException
+	 * @throws StationNotFoundException
+	 */
+	public void testInitStation(String stationId, int x, int y, int capacity, int returnPrize) throws BadInitException, StationNotFoundException {
+		//validate station can rent
+		StationClient stationCli;
+		try {
+			stationCli = getStation(stationId);
+			stationCli.testInit(x, y, capacity, returnPrize);
+		} catch (BadInit_Exception e) {
+			throw new BadInitException(e.getMessage());
+		}
+		
 	}
 }

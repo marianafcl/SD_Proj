@@ -10,35 +10,38 @@ public class StationApp {
 
 	public static void main(String[] args) throws Exception {
 		// Check arguments
-		if (args.length < 2) {
+		if (args.length == 0 || args.length == 2) {
 			System.err.println("Argument(s) missing!");
-			System.err.println("Usage: java " + StationApp.class.getName() + "wsName wsURL OR wsName wsURL uddiURL");
+			System.err.println("Usage: java " + StationApp.class.getName() + " wsURL OR uddiURL wsName wsURL");
 			return;
 		}
-		String wsName = args[0];
-		String wsURL = args[1];
-		String uddiURL;
-		StationEndpointManager endpoint;
 		
-		// handle UDDI arguments
-		if (args.length == 3) {
-			uddiURL = args[2];
+		String uddiURL = null;
+		String wsName = null;
+		String wsURL = null;
+		
+		
+		// Create server implementation object, according to options
+		StationEndpointManager endpoint = null;
+		if (args.length == 1) {
+			wsURL = args[0];
+			endpoint = new StationEndpointManager(wsURL);
+			Station.getInstance().setId(wsURL);
+
+		} else if (args.length >= 3) {
+			uddiURL = args[0];
+			wsName = args[1];
+			wsURL = args[2];
 			endpoint = new StationEndpointManager(uddiURL, wsName, wsURL);
+			endpoint.setVerbose(true);
+			Station.getInstance().setId(wsName);
 		}
-		else {
-			endpoint = new StationEndpointManager(wsName, wsURL);
-		}
-		
-		Station.getInstance().setId(wsName);
 
-		System.out.println(StationApp.class.getSimpleName() + " running");
-
-		// start Web Service
-		 try {
-		endpoint.start();
-		endpoint.awaitConnections();
+		try {
+			endpoint.start();
+			endpoint.awaitConnections();
 		} finally {
-		endpoint.stop();
+			endpoint.stop();
 		}
 
 	}

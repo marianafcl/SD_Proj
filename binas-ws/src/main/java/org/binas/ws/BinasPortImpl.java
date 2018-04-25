@@ -1,336 +1,337 @@
 package org.binas.ws;
 
+import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.jws.WebService;
 
 import org.binas.domain.BinasManager;
-import org.binas.domain.exception.AlreadyHasBinaException;
+import org.binas.domain.StationsComparator;
+import org.binas.domain.User;
+import org.binas.domain.UsersManager;
 import org.binas.domain.exception.BadInitException;
-import org.binas.domain.exception.EmailExistsException;
+import org.binas.domain.exception.InsufficientCreditsException;
 import org.binas.domain.exception.InvalidEmailException;
-import org.binas.domain.exception.NoBinaRentedException;
-import org.binas.domain.exception.NoCreditException;
-import org.binas.domain.exception.UserNotExistsException;
+import org.binas.domain.exception.StationNotFoundException;
+import org.binas.domain.exception.UserAlreadyExistsException;
+import org.binas.domain.exception.UserAlreadyHasBinaException;
+import org.binas.domain.exception.UserHasNoBinaException;
+import org.binas.domain.exception.UserNotFoundException;
+import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.cli.StationClient;
+
 import org.binas.station.ws.cli.StationClientException;
 
-/**
- * This class implements the Web Service port type (interface). The annotations
- * below "map" the Java class to the WSDL definitions.
- */
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
+import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
 
- @WebService(endpointInterface = "org.binas.ws.BinasPortType",
-		 wsdlLocation = "binas.wsdl",
-		 name ="BinasWebService",
-		 portName = "BinasPort",
-		 targetNamespace="http://ws.binas.org/",
-		 serviceName = "BinasService"
- )
- 
+@WebService(
+		endpointInterface = "org.binas.ws.BinasPortType",
+        wsdlLocation = "binas.wsdl",
+        name ="BinasWebService",
+        portName = "BinasPort",
+        targetNamespace="http://ws.binas.org/",
+        serviceName = "BinasService"
+)
 public class BinasPortImpl implements BinasPortType {
-
-	/**
-	 * The Endpoint manager controls the Web Service instance during its whole
-	 * lifecycle.
-	 */
+	
+	// end point manager
 	private BinasEndpointManager endpointManager;
 
-	/** Constructor receives a reference to the endpoint manager. */
 	public BinasPortImpl(BinasEndpointManager endpointManager) {
 		this.endpointManager = endpointManager;
 	}
 
-	 //Main operations -------------------------------------------------------
-
-	 /** Retrieve list of stations. */
-	 @Override
-	 public List<StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
-		 try {
-			 List<StationView> stations = new ArrayList<StationView>();
-			 Collection<String> urls = endpointManager.listUDDI();
-		 
-			 for(String s : urls) {
-				StationView sv = new StationView();
-				StationClient sc = new StationClient(s);
-	
-				CoordinatesView cv = new CoordinatesView();
-				cv.setX(sc.getInfo().getCoordinate().getX());
-				cv.setY(sc.getInfo().getCoordinate().getY());
-				
-				sv.setAvailableBinas(sc.getInfo().getAvailableBinas());
-				sv.setCapacity(sc.getInfo().getCapacity());
-				sv.setCoordinate(cv);
-				sv.setFreeDocks(sc.getInfo().getFreeDocks());
-				sv.setId(sc.getInfo().getId());
-				sv.setTotalGets(sc.getInfo().getTotalGets());
-				sv.setTotalReturns(sc.getInfo().getTotalReturns());
-				stations.add(sv);
-			 }
-		 
-			 //stations = BinasManager.getInstance().listStations(stations, numberOfStations, coordinates);		 
-		 
-			 return stations;
-		 }
-		 catch(StationClientException e) {
-			 System.out.printf("Caught exception when stopping: %s%n", e);
-			 return null;
-		 }
-	 }	 
-	 
-	 /** Retrieve station. */
-	 @Override
-	 public StationView getInfoStation(String stationID) throws InvalidStation_Exception {
-		StationClient sc = null;
-		StationView sv = new StationView();
-		
-		String wsURL = endpointManager.lookUpUDDI(stationID);
-		if (wsURL == null) {
-			throwInvalidStationException("Error: Invalid station");
-		}
+	@Override
+	public UserView activateUser(String email) throws InvalidEmail_Exception, EmailExists_Exception {
 		try {
-			sc = new StationClient(wsURL);
-		} catch (StationClientException e) {
-			throwInvalidStationException("Error: Invalid station");
-		}
-		
-		
-		CoordinatesView cv = new CoordinatesView();
-		cv.setX(sc.getInfo().getCoordinate().getX());
-		cv.setY(sc.getInfo().getCoordinate().getY());
-		
-		sv.setAvailableBinas(sc.getInfo().getAvailableBinas());
-		sv.setCapacity(sc.getInfo().getCapacity());
-		sv.setCoordinate(cv);
-		sv.setFreeDocks(sc.getInfo().getFreeDocks());
-		sv.setId(sc.getInfo().getId());
-		sv.setTotalGets(sc.getInfo().getTotalGets());
-		sv.setTotalReturns(sc.getInfo().getTotalReturns());
+			User user = BinasManager.getInstance().createUser(email);
 			
-		return sv;
-	 }
-	
-	 /** Return a user's bike to a station. */
-	 @Override
-	 public void returnBina(String stationID, String email) throws FullStation_Exception, InvalidStation_Exception,
-	 NoBinaRented_Exception, UserNotExists_Exception {
-		 StationClient sc;
-		 try {
-			BinasManager.getInstance().returnBina(email);
-			sc = new StationClient(endpointManager.lookUpUDDI(stationID));
-			sc.returnBina();
-		 }
-		 catch(org.binas.station.ws.NoSlotAvail_Exception e) {
-			throwNoSlotAvailException("Error: station is full");
-		 }
-		 catch(StationClientException e) {
-			 throwInvalidStationException("Error: station id is invalid");
-		 }
-		 catch(NoBinaRentedException e) {
-			 throwNoBinaRentedException("Error: no bina rented");
-		 }
-		 catch(UserNotExistsException e) {
-			 throwUserNotExistsException("Error: user doesn't exist");
-		 }
-	 }
-	
-	 /** Take a user's bike from a station. */
-	 @Override
-	 public void rentBina(String stationID, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception,
-	 NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception {
-		StationClient sc;
-		String wsURL = endpointManager.lookUpUDDI(stationID);
-		if (wsURL == null) {
-			throwInvalidStationException("Error: station id is invalid");
+			//Create and populate userView
+			UserView userView = new UserView();
+			userView.setEmail(user.getEmail());
+			userView.setCredit(user.getCredit());
+			userView.setHasBina(user.getHasBina());
+			return userView;
+		} catch (UserAlreadyExistsException e) {
+			throwEmailExists("Email already exists: " + email);
+		} catch (InvalidEmailException e) {
+			throwInvalidEmail("Invalid email: " + email);
 		}
+		return null;
+	}
+
+	@Override
+	public StationView getInfoStation(String stationId) throws InvalidStation_Exception {
+		if(stationId == null || stationId.trim().isEmpty())
+			throwInvalidStation("Station IDs can not be empty!");
+		
+		StationClient stationCli;
 		try {
-			BinasManager.getInstance().getBina(email);
-			sc = new StationClient(wsURL);
-			sc.getBina();
+			stationCli = BinasManager.getInstance().getStation(stationId);
+			return newStationView(stationCli.getInfo());
+		} catch (StationNotFoundException e) {
+			throwInvalidStation("No Station found with ID: " + stationId);
+			return null;
 		}
-		catch(AlreadyHasBinaException e) {
-			throwAlreadyHasBinaException("Error: already has bina");
-		}
-		catch(StationClientException e) {
-			 throwInvalidStationException("Error: station id is invalid");
-		}
-		catch(org.binas.station.ws.NoBinaAvail_Exception e) {
-			 throwNoBinaAvailException("Error: no bina available");
-		}
-		catch(NoCreditException e) {
-			 throwNoCreditException("Error: no credit");
-		}
-		catch(UserNotExistsException e) {
-			 throwUserNotExistsException("Error: user doesn't exist");
-		}
-	 }
-	 
-	 /** Get a user's credit. */
-	 @Override
-	 public int getCredit(String email) throws UserNotExists_Exception {
-		 try {
-			 return BinasManager.getInstance().getCredit(email);
-		 }
-		 catch(UserNotExistsException e) {
-			 throwUserNotExistsException("Error: user doesn't exist");
-			 return 0;
-		 }
-	 }
-	 
-	 /** Activate a user. */
-	 @Override
-	 public UserView activateUser(String email) throws EmailExists_Exception, InvalidEmail_Exception {
-		 try {
-			 return BinasManager.getInstance().activateUser(email);
-		 }
-		 catch(EmailExistsException e) {
-			 throwEmailExistsException("Error: email already in use");
-			 return null;
-		 }
-		 catch(InvalidEmailException e) {
-			 throwInvalidEmailException("Error: invalid email address");
-			 return null;
-		 }
-	 }
+		
+	}
 
-	 //Test Control operations -----------------------------------------------
+	@Override
+	public List<StationView> listStations(Integer numberOfStations, CoordinatesView coordinates) {
+		List<StationView> stationViews = new ArrayList<StationView>();
+		Collection<String> stations = BinasManager.getInstance().getStations();
+		String uddiUrl = BinasManager.getInstance().getUddiURL();
+		StationClient sc = null;
+		org.binas.station.ws.StationView sv = null;
+		
+		if(numberOfStations <= 0 || coordinates == null)
+			return stationViews;
+		
+		for (String s : stations) {
+			try {
+				sc = new StationClient(uddiUrl, s);
+				sv = sc.getInfo();
+				stationViews.add(newStationView(sv));
+			} catch(StationClientException e) {
+				continue;
+			}
+		}
+		Collections.sort(stationViews, new StationsComparator(coordinates));
+		
+		if(numberOfStations > stationViews.size())
+			return stationViews;
+		else
+			return stationViews.subList(0, numberOfStations);
+	}
 
-	 /** Diagnostic operation to check if service is running. */
-	 @Override
-	 public String testPing(String inputMessage) {
-		 try {
-			 Collection<String> urls = endpointManager.listUDDI();
-		 
-			 StringBuilder builder = new StringBuilder();
-		 
-			 for(String s : urls) {
-				 StationClient sc = new StationClient(s);
-				 builder.append(sc.testPing(inputMessage));
-			 }
-		 
-			 return builder.toString();
-		 }
-		 catch(StationClientException e) {
-			 System.out.printf("Caught exception when stopping: %s%n", e);
-			 return null;
-		 }
-	 }
+	@Override
+	public void rentBina(String stationId, String email) throws AlreadyHasBina_Exception, InvalidStation_Exception,
+			NoBinaAvail_Exception, NoCredit_Exception, UserNotExists_Exception {
+		
+		try {
+			BinasManager.getInstance().rentBina(stationId,email);
+		} catch (UserNotFoundException e) {
+			throwUserNotExists("User not found: " + email);
+		} catch (InsufficientCreditsException e) {
+			throwNoCredit("User has insufficient credits: " + email);
+		} catch (UserAlreadyHasBinaException e) {
+			throwAlreadyHasBina("User already has bina: " + email);
+		} catch (StationNotFoundException e) {
+			throwInvalidStation("Station not found: " + stationId);
+		} catch (org.binas.station.ws.NoBinaAvail_Exception e) {
+			throwNoBinaAvail("Station has no Binas available: " + stationId);
+		}
+	}
+
+
+	@Override
+	public void returnBina(String stationId, String email)
+			throws FullStation_Exception, InvalidStation_Exception, NoBinaRented_Exception, UserNotExists_Exception {
+		try {
+			BinasManager.getInstance().returnBina(stationId,email);
+		} catch (UserNotFoundException e) {
+			throwUserNotExists("User not found: " + email);
+		} catch (NoSlotAvail_Exception e) {
+			throwFullStation("Station has NO docks available: " + stationId);
+		} catch (UserHasNoBinaException e) {
+			throwNoBinaRented("User has NO bina: " + email);
+		} catch (StationNotFoundException e) {
+			throwInvalidStation("Station not found: " + stationId);
+		}
+	}
+
+	@Override
+	public int getCredit(String email) throws UserNotExists_Exception {
+		try {
+			User user = BinasManager.getInstance().getUser(email);	
+			return user.getCredit();
+		} catch (UserNotFoundException e) {
+			throwUserNotExists("User not found: " + email);
+		}
+		return 0;
+	}
 	
-	 /** Return all binas variables to default values. */
-	 @Override
-	 public void testClear() {
-		 BinasManager.getInstance().reset();
-		 try {
-			 Collection<String> urls = endpointManager.listUDDI();
-		 
-			 for(String s : urls) {
-				 StationClient sc = new StationClient(s);
-				 sc.testClear();
-			 }
-		 
-		 }
-		 catch(StationClientException e) {
-			 System.out.printf("Caught exception when stopping: %s%n", e);
-
-		 }
-	 }
+	// Auxiliary operations --------------------------------------------------
 	
-	 /** Set station variables with specific values. */
-	 @Override
-	 public void testInitStation(String StationID, int x, int y, int capacity, int returnPrize) throws BadInit_Exception {
-		 try {
-			 StationClient sc = new StationClient(endpointManager.lookUpUDDI(StationID));
-			 sc.testInit(x, y, capacity, returnPrize);
-		 }
-		 catch(StationClientException e) {
-			 throwBadInitException("Error: station with invalid id");
-		 }
-		 catch (org.binas.station.ws.BadInit_Exception e) {
-			 throwBadInitException("Error: invalid arguments");
-		 }
-	 }
-	 
-	 /** Set binas variables with specific values. */
-	 @Override
-	 public void testInit(int userInitialPoints) throws BadInit_Exception {
-		 try {
-			 BinasManager.getInstance().init(userInitialPoints);
-		 } catch(BadInitException e) {
-			 throwBadInitException("Invalid initialization values!");
-		 }
-	 }
+	@Override
+	public String testPing(String inputMessage) {
+		final String EOL = String.format("%n");
+		StringBuilder sb = new StringBuilder();
 
-	 //Exception helpers -----------------------------------------------------
+		sb.append("Hello ");
+		if (inputMessage == null || inputMessage.length()==0)
+			inputMessage = "friend";
+		sb.append(inputMessage);
+		sb.append(" from ");
+		sb.append(endpointManager.getWsName());
+		sb.append("!");
+		sb.append(EOL);
+		
+		Collection<String> stationUrls = null;
+		try {
+			UDDINaming uddiNaming = endpointManager.getUddiNaming();
+			stationUrls = uddiNaming.list(BinasManager.getInstance().getStationTemplateName() + "%");
+			sb.append("Found ");
+			sb.append(stationUrls.size());
+			sb.append(" stations on UDDI.");
+			sb.append(EOL);
+		} catch(UDDINamingException e) {
+			sb.append("Failed to contact the UDDI server:");
+			sb.append(EOL);
+			sb.append(e.getMessage());
+			sb.append(" (");
+			sb.append(e.getClass().getName());
+			sb.append(")");
+			sb.append(EOL);
+			return sb.toString();
+		}
 
-	 /** Helper to throw a new InvalidStation_Exception exception. */
-	 private void throwInvalidStationException(final String message) throws InvalidStation_Exception {
-		 InvalidStation faultInfo = new InvalidStation();
-		 faultInfo.message = message;
-		 throw new InvalidStation_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new BadInit exception. */
-	 private void throwBadInitException(final String message) throws BadInit_Exception {
-		 BadInit faultInfo = new BadInit();
-		 faultInfo.message = message;
-		 throw new BadInit_Exception(message, faultInfo);
-	 }
+		for(String stationUrl : stationUrls) {
+			sb.append("Ping result for station at ");
+			sb.append(stationUrl);
+			sb.append(":");
+			sb.append(EOL);
+			try {
+				StationClient client = new StationClient(stationUrl);
+				String supplierPingResult = client.testPing(endpointManager.getWsName());
+				sb.append(supplierPingResult);
+			} catch(Exception e) {
+				sb.append(e.getMessage());
+				sb.append(" (");
+				sb.append(e.getClass().getName());
+				sb.append(")");
+			}
+			sb.append(EOL);
+		}
+		
+		return sb.toString();
+	}
+
+	@Override
+	public void testClear() {
+		//Reset Binas
+		BinasManager.getInstance().reset();
+
+		//Reset All Stations
+		Collection<String> stations = BinasManager.getInstance().getStations();
+		String uddiUrl = BinasManager.getInstance().getUddiURL();
+		StationClient sc = null;
+
+		for (String s : stations) {
+			try {
+				sc = new StationClient(uddiUrl, s);
+				sc.testClear();
+			} catch(StationClientException e) {
+				continue;
+			}
+		}
+	}
+
+	@Override
+	public void testInitStation(String stationId, int x, int y, int capacity, int returnPrize)
+			throws BadInit_Exception {
+		
+		try {
+			BinasManager.getInstance().testInitStation(stationId,x,y,capacity,returnPrize);
+		} catch (BadInitException e) {
+			throwBadInit("Bad init values");
+		} catch (StationNotFoundException e) {
+			throwBadInit("No Station found with ID: " + stationId);
+		}
+	}
+
+	@Override
+	public void testInit(int userInitialPoints) throws BadInit_Exception {
+		try {
+			BinasManager.getInstance().init(userInitialPoints);
+		} catch (BadInitException e) {
+			throwBadInit("Bad init values: " + userInitialPoints);
+		}
+	}
 	
-	 /** Helper to throw a new NoSlotAvail exception. */
-	 private void throwNoSlotAvailException(final String message) throws FullStation_Exception {
-		 FullStation faultInfo = new FullStation();
-		 faultInfo.message = message;
-		 throw new FullStation_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new NoBinaAvail exception. */
-	 private void throwNoBinaAvailException(final String message) throws NoBinaAvail_Exception {
-		 NoBinaAvail faultInfo = new NoBinaAvail();
-		 faultInfo.message = message;
-		 throw new NoBinaAvail_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new NoBinaRented exception. */
-	 private void throwNoBinaRentedException(final String message) throws NoBinaRented_Exception {
-		 NoBinaRented faultInfo = new NoBinaRented();
-		 faultInfo.message = message;
-		 throw new NoBinaRented_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new AlreadyHasBina exception. */
-	 private void throwAlreadyHasBinaException(final String message) throws AlreadyHasBina_Exception {
-		 AlreadyHasBina faultInfo = new AlreadyHasBina();
-		 faultInfo.message = message;
-		 throw new AlreadyHasBina_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new UserNotExists exception. */
-	 private void throwUserNotExistsException(final String message) throws UserNotExists_Exception {
-		 UserNotExists faultInfo = new UserNotExists();
-		 faultInfo.message = message;
-		 throw new UserNotExists_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new NoCredit exception. */
-	 private void throwNoCreditException(final String message) throws NoCredit_Exception {
-		 NoCredit faultInfo = new NoCredit();
-		 faultInfo.message = message;
-		 throw new NoCredit_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new EmailExists exception. */
-	 private void throwEmailExistsException(final String message) throws EmailExists_Exception {
-		 EmailExists faultInfo = new EmailExists();
-		 faultInfo.message = message;
-		 throw new EmailExists_Exception(message, faultInfo);
-	 }
-	 
-	 /** Helper to throw a new InvalidEmail exception. */
-	 private void throwInvalidEmailException(final String message) throws InvalidEmail_Exception {
-		 InvalidEmail faultInfo = new InvalidEmail();
-		 faultInfo.message = message;
-		 throw new InvalidEmail_Exception(message, faultInfo);
-	 }
+	
+	// View helpers ----------------------------------------------------------
+	
+	private StationView newStationView(org.binas.station.ws.StationView sv) {
+		StationView retSv = new StationView();
+		CoordinatesView coordinates = new CoordinatesView();
+		coordinates.setX(sv.getCoordinate().getX());
+		coordinates.setY(sv.getCoordinate().getY());
+		
+		retSv.setCapacity(sv.getCapacity());
+		retSv.setCoordinate(coordinates);
+		retSv.setAvailableBinas(sv.getAvailableBinas());
+		retSv.setFreeDocks(sv.getFreeDocks());
+		retSv.setId(sv.getId());
+		retSv.setTotalGets(sv.getTotalGets());
+		retSv.setTotalReturns(sv.getTotalReturns());
+		return retSv;
+	}
+	
+	// Exception helpers -----------------------------------------------------
+	
+	private void throwInvalidEmail(final String message) throws InvalidEmail_Exception {
+		InvalidEmail faultInfo = new InvalidEmail();
+		faultInfo.setMessage(message);
+		throw new InvalidEmail_Exception(message, faultInfo);
+	}
+	
+	private void throwEmailExists(final String message) throws EmailExists_Exception {
+		EmailExists faultInfo = new EmailExists();
+		faultInfo.setMessage(message);
+		throw new EmailExists_Exception(message, faultInfo);
+	}
+	
+	private void throwInvalidStation(final String message) throws InvalidStation_Exception {
+		InvalidStation faultInfo = new InvalidStation();
+		faultInfo.setMessage(message);
+		throw new InvalidStation_Exception(message, faultInfo);
+	}
+	
+	private void throwUserNotExists(final String message) throws UserNotExists_Exception {
+		UserNotExists faultInfo = new UserNotExists();
+		faultInfo.setMessage(message);
+		throw new UserNotExists_Exception(message, faultInfo);
+	}
+	
+	private void throwNoCredit(final String message) throws NoCredit_Exception {
+		NoCredit faultInfo = new NoCredit();
+		faultInfo.setMessage(message);
+		throw new NoCredit_Exception(message, faultInfo);
+	}
+	
+	private void throwAlreadyHasBina(final String message) throws AlreadyHasBina_Exception {
+		AlreadyHasBina faultInfo = new AlreadyHasBina();
+		faultInfo.setMessage(message);
+		throw new AlreadyHasBina_Exception(message, faultInfo);
+	}
+	
+	private void throwNoBinaAvail(final String message) throws NoBinaAvail_Exception {
+		NoBinaAvail faultInfo = new NoBinaAvail();
+		faultInfo.setMessage(message);
+		throw new NoBinaAvail_Exception(message, faultInfo);
+	}
+	
+	private void throwNoBinaRented(final String message) throws NoBinaRented_Exception {
+		NoBinaRented faultInfo = new NoBinaRented();
+		faultInfo.setMessage(message);
+		throw new NoBinaRented_Exception(message, faultInfo);
+	}
+	
+	private void throwFullStation(final String message) throws FullStation_Exception {
+		FullStation faultInfo = new FullStation();
+		faultInfo.setMessage(message);
+		throw new FullStation_Exception(message, faultInfo);
+	}
+
+	private void throwBadInit(final String message) throws BadInit_Exception {
+		BadInit faultInfo = new BadInit();
+		faultInfo.setMessage(message);
+		throw new BadInit_Exception(message, faultInfo);
+	}
 }
