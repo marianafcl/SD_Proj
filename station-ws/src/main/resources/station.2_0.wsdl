@@ -37,6 +37,13 @@
                 </xs:sequence>
             </xs:complexType>
             
+            <xs:complexType name="responseServerView">
+                <xs:sequence>
+                    <xs:element name="credit" type="xs:int" />
+                    <xs:element name="tag" type="xs:string" />
+                </xs:sequence>
+            </xs:complexType>
+            
 			 <!-- GetBalance  -->
 			<xs:complexType name="getBalance">
 				<xs:sequence>
@@ -46,10 +53,11 @@
 			<xs:element name="getBalance" type="tns:getBalance"/>
 			<xs:complexType name="getBalanceResponse">
 				<xs:sequence>
-					<xs:element name="credit" type="xs:int"/>
-					<xs:element name="tag" type="xs:string"/>
+					<xs:element name="serverResponse" type="tns:responseServerView"/>
 				</xs:sequence>
 			</xs:complexType>
+			<xs:element name="getBalanceResponse" type="tns:getBalanceResponse"/>
+			
 			<!-- SetBalance -->
 			<xs:complexType name="setBalance">
 				<xs:sequence>
@@ -63,7 +71,6 @@
 				<xs:sequence/>
 			</xs:complexType>
 			<xs:element name="setBalanceResponse" type="tns:setBalanceResponse"/>
-            
             
             <xs:complexType name="getInfo">
                 <xs:sequence />
