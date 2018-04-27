@@ -322,6 +322,26 @@
             style="document" />
 
         <!-- main service operations -->
+        <operation name="getBalance">
+            <soap:operation soapAction="" />
+            <input>
+                <soap:body use="literal" />
+            </input>
+            <output>
+                <soap:body use="literal" />
+            </output>
+        </operation>
+        
+        <operation name=setBalance">
+            <soap:operation soapAction="" />
+            <input>
+                <soap:body use="literal" />
+            </input>
+            <output>
+                <soap:body use="literal" />
+            </output>
+        </operation>
+        
         <operation name="getInfo">
             <soap:operation soapAction="" />
             <input>
