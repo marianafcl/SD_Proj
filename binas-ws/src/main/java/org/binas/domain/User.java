@@ -7,6 +7,8 @@ import org.binas.domain.exception.InsufficientCreditsException;
 import org.binas.domain.exception.UserAlreadyHasBinaException;
 import org.binas.domain.exception.UserHasNoBinaException;
 
+import com.sun.swing.internal.plaf.synth.resources.synth;
+
 /**
  * 
  * Domain class that represents the User and deals with their creation, balance manipulation, email manipulation, etc.
@@ -16,12 +18,14 @@ import org.binas.domain.exception.UserHasNoBinaException;
 public class User {
 
 	private String email;
+	private AtomicInteger tag;
 	private AtomicInteger balance;
 	private AtomicBoolean hasBina = new AtomicBoolean(false);
 	
 	public User(String email, int initialBalance) {
 		this.email = email;
 		balance = new AtomicInteger(initialBalance);
+		tag = new AtomicInteger(0);
 	}
 	
 	public synchronized void decrementBalance() throws InsufficientCreditsException{
@@ -77,7 +81,16 @@ public class User {
 		hasBina.set(false);
 		incrementBalance(prize);
 	}
-
-
 	
+	public synchronized void setBalance(int credit) {
+		balance = new AtomicInteger(credit);
+	}
+	
+	public synchronized void setTag(int t) {
+		tag = new AtomicInteger(t);
+	}
+	
+	public int getTag() {
+		return tag.get();
+	}
 }

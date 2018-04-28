@@ -1,5 +1,7 @@
 package org.binas.station.ws;
 
+import java.util.HashSet;
+
 import javax.jws.WebService;
 
 import org.binas.station.domain.Coordinates;
@@ -69,6 +71,18 @@ public class StationPortImpl implements StationPortType {
 			throwNoBinaAvail("No Bina available at this station!");
 		}
 	}
+	
+	@Override
+	public ResponseServerView getBalance(String email) {
+		Station station = Station.getInstance();
+		return buildResponseServerView(station.getBalance(email));
+	}
+
+	@Override
+	public void setBalance(String email, int credit, int tag) {
+		Station station = Station.getInstance();
+		station.setBalance(email, credit, tag);
+	}
 
 
 	// Test Control operations -----------------------------------------------
@@ -131,6 +145,16 @@ public class StationPortImpl implements StationPortType {
 		return view;
 	}
 	
+	private ResponseServerView buildResponseServerView(int[] balance) {
+		if(balance == null) {
+			return null;
+		}
+		ResponseServerView responseServerView = new ResponseServerView();
+		responseServerView.setCredit(balance[0]);
+		responseServerView.setTag(balance[1]);
+		return responseServerView;
+	}
+	
 	// Exception helpers -----------------------------------------------------
 
 	/** Helper to throw a new NoBinaAvail exception. */
@@ -153,5 +177,4 @@ public class StationPortImpl implements StationPortType {
 		faultInfo.message = message;
 		throw new BadInit_Exception(message, faultInfo);
 	}
-
 }

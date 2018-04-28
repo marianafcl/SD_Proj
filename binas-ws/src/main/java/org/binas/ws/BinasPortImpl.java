@@ -50,7 +50,15 @@ public class BinasPortImpl implements BinasPortType {
 	public UserView activateUser(String email) throws InvalidEmail_Exception, EmailExists_Exception {
 		try {
 			User user = BinasManager.getInstance().createUser(email);
+			int[] aux = BinasManager.getInstance().getBalance(email);
 			
+			if(aux != null) {
+				user.setBalance(aux[0]);
+				user.setTag(aux[1]);
+				throw new UserAlreadyExistsException();
+			}
+			BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit(), user.getTag());
+				
 			//Create and populate userView
 			UserView userView = new UserView();
 			userView.setEmail(user.getEmail());

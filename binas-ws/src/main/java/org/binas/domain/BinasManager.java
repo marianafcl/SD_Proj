@@ -2,7 +2,10 @@ package org.binas.domain;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
+
+import javax.xml.ws.Response;
 
 import org.binas.domain.exception.BadInitException;
 import org.binas.domain.exception.InsufficientCreditsException;
@@ -13,8 +16,10 @@ import org.binas.domain.exception.UserAlreadyHasBinaException;
 import org.binas.domain.exception.UserHasNoBinaException;
 import org.binas.domain.exception.UserNotFoundException;
 import org.binas.station.ws.BadInit_Exception;
+import org.binas.station.ws.GetBalanceResponse;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
+import org.binas.station.ws.ResponseServerView;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
 import org.binas.ws.StationView;
@@ -116,6 +121,108 @@ public class BinasManager {
 		}
 		
 		throw new StationNotFoundException();
+	}
+	
+	public int[] getBalance(String email) {
+		Collection<String> stations = getStations();
+		User user = null;
+		boolean fault = false;
+		int stationsResponses = 0;
+		try {
+			user = getUser(email);
+		}catch (UserNotFoundException e1) {
+			ArrayList<int[]> infoClients = new ArrayList<>();
+			for(String station : stations) {
+				if(stationsResponses == 2) {
+					break;
+				}
+				try {
+					StationClient stationCli = getStation(station);
+					Response<GetBalanceResponse> response = stationCli.getBalanceAsync(email);
+					 while (!response.isDone()) {
+				            Thread.sleep(100);
+				     }
+					 ResponseServerView responseServerView = response.get().getServerResponse();
+					 if(responseServerView != null) {
+						 int[] aux3 = {responseServerView.getCredit(), responseServerView.getTag()};
+						 infoClients.add(aux3);
+					 }
+					 stationsResponses++;
+					 
+				} catch (StationNotFoundException | InterruptedException | ExecutionException e) {
+					if(fault == true) {
+						e.printStackTrace();
+		            }
+		            else {
+		                fault = true;
+		            }
+				} 	
+			}
+			if(infoClients.isEmpty()) {
+				return null;
+			}
+			int[] maxValue = { infoClients.get(0)[0], infoClients.get(0)[1]};
+			for(int i = 1; i < infoClients.size(); i++) {
+				if(infoClients.get(i)[1] > maxValue[1]) {
+					maxValue = infoClients.get(i);
+					
+				}
+			}
+			try {
+				user = BinasManager.getInstance().createUser(email);
+				user.setBalance(maxValue[0]);
+				user.setTag(maxValue[1]);
+			} catch (UserAlreadyExistsException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvalidEmailException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			return maxValue;
+		}
+		int[] aux = {user.getCredit(), user.getTag()};
+		return aux; 
+	}
+	
+	public void setBalance(String email, int credit, int tag) {
+		int[] clientInfo = getBalance(email);
+		if(clientInfo == null) {
+			return nao sei o que ele faz;
+		}
+		Collection<String> stations = getStations();
+		User user = null;
+		boolean fault = false;
+		int stationsResponses = 0;
+		ArrayList<int[]> infoClients = new ArrayList<>();
+		for(String station : stations) {
+			if(stationsResponses == 2) {
+				break;
+			}
+			try {
+				StationClient stationCli = getStation(station);
+				Response<GetBalanceResponse> response = stationCli.getBalanceAsync(email);
+				while (!response.isDone()) {
+			            Thread.sleep(100);
+			     }
+				 ResponseServerView responseServerView = response.get().getServerResponse();
+				 if(responseServerView != null) {
+					 int[] aux3 = {responseServerView.getCredit(), responseServerView.getTag()};
+					 infoClients.add(aux3);
+				 }
+				 stationsResponses++;
+				 
+			} catch (StationNotFoundException | InterruptedException | ExecutionException e) {
+				if(fault == true) {
+					e.printStackTrace();
+				}
+		        else {
+		        	fault = true;
+		        }
+			}
+		}
+		int[] aux = {user.getCredit(), user.getTag()};
 	}
 	
 	

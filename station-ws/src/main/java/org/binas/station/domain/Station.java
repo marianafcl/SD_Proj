@@ -1,5 +1,9 @@
 package org.binas.station.domain;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.binas.station.domain.exception.BadInitException;
@@ -13,6 +17,7 @@ import org.binas.station.domain.exception.NoSlotAvailException;
  *
  */
 public class Station {
+	private HashMap<String, int[]> clientsLists = new HashMap<>();
 	
 	/** Creates and returns default coordinates. */
 	private static final Coordinates DEFAULT_COORDINATES = new Coordinates(5, 5);
@@ -136,5 +141,17 @@ public class Station {
     public synchronized int getAvailableBinas() {
     	return maxCapacity - freeDocks.get();
     }
+    
+    public int[] getBalance(String email) {
+    	return clientsLists.get(email);
+    }
+    
+    public void setBalance(String email, int credit, int tag) {
+    	int aux[] = {credit, tag};
+   
+    	clientsLists.put(email, aux);
+    }
+    
+    
     	
 }

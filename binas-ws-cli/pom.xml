@@ -6,7 +6,7 @@
 	<!-- Please replace 'CXX' below with your C (campus) with A (Alameda) / T (Tagus); 
 		and your group number with two digits. 
 		Then delete this comment. -->
-	<groupId>org.binas.CXX</groupId>
+	<groupId>org.binas.A48</groupId>
 	<artifactId>binas-ws-cli</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
@@ -25,7 +25,7 @@
 
 		<mainclass>org.binas.ws.cli.BinasClientApp</mainclass>
 
-		<group.id>CXX</group.id>
+		<group.id>A48</group.id>
 		<uddi.url>http://localhost:9090</uddi.url>
 		<ws.name>${group.id}_Binas</ws.name>
 		<ws.url>http://localhost:8080/binas-ws/endpoint</ws.url>
@@ -54,7 +54,7 @@
 		</dependency>
 		<!-- Station Client -->
 		<dependency>
-            <groupId>org.binas.CXX</groupId>
+            <groupId>org.binas.A48</groupId>
             <artifactId>station-ws-cli</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>test</scope>
