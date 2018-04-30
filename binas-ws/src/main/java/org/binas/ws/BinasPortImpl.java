@@ -1,7 +1,6 @@
 package org.binas.ws;
 
-import java.io.IOException;
-import java.net.ConnectException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +11,6 @@ import javax.jws.WebService;
 import org.binas.domain.BinasManager;
 import org.binas.domain.StationsComparator;
 import org.binas.domain.User;
-import org.binas.domain.UsersManager;
 import org.binas.domain.exception.BadInitException;
 import org.binas.domain.exception.InsufficientCreditsException;
 import org.binas.domain.exception.InvalidEmailException;
@@ -49,14 +47,12 @@ public class BinasPortImpl implements BinasPortType {
 	@Override
 	public UserView activateUser(String email) throws InvalidEmail_Exception, EmailExists_Exception {
 		try {
-			User user = BinasManager.getInstance().createUser(email);
 			int[] aux = BinasManager.getInstance().getBalance(email);
 			
 			if(aux != null) {
-				user.setBalance(aux[0]);
-				user.setTag(aux[1]);
 				throw new UserAlreadyExistsException();
 			}
+			User user = BinasManager.getInstance().createUser(email);
 			try {
 				BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit());
 			} catch (UserNotFoundException e) {
@@ -159,12 +155,12 @@ public class BinasPortImpl implements BinasPortType {
 	}
 
 	@Override
-	public int getCredit(String email) throws UserNotExists_Exception {
-		int[] infoClient = BinasManager.getInstance().getBalance(email);
-		if(infoClient == null) {
-			throwUserNotExists("User not found: " + email);
-		}
-		return infoClient[0];
+	public synchronized int getCredit(String email) throws UserNotExists_Exception {
+			int[] infoClient = BinasManager.getInstance().getBalance(email);
+			if(infoClient == null) {
+				throwUserNotExists("User not found: " + email);
+			}
+			return infoClient[0];
 	}
 	
 	// Auxiliary operations --------------------------------------------------

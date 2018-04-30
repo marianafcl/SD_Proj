@@ -3,7 +3,6 @@ package org.binas.domain;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Pattern;
 
 import javax.xml.ws.Response;
 
@@ -23,7 +22,6 @@ import org.binas.station.ws.ResponseServerView;
 import org.binas.station.ws.SetBalanceResponse;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
-import org.binas.ws.StationView;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
@@ -74,38 +72,46 @@ public class BinasManager {
 	}
 	
 	public void rentBina(String stationId, String email) throws UserNotFoundException, InsufficientCreditsException, UserAlreadyHasBinaException, StationNotFoundException, NoBinaAvail_Exception {
-		int[] infoClient = getBalance(email);
 		User user = getUser(email);
 		synchronized (user) {
-		
+			getBalance(email);
 			//validate user can rent
 			user.validateCanRentBina();
 
 			//validate station can rent
 			StationClient stationCli = getStation(stationId);
-			stationCli.getBina();
+			stationCli.getBinaAsync();
 			
 			//apply rent action to user
 			user.effectiveRent();
+			setBalance(email, user.getCredit());
 		}
-		setBalance(email, user.getCredit());
 	}
 	
 	public void returnBina(String stationId, String email) throws UserNotFoundException, NoSlotAvail_Exception, UserHasNoBinaException, StationNotFoundException {
-		int[] infoClient = getBalance(email);
 		User user = getUser(email);
 		synchronized (user) {
+			getBalance(email);
 			//validate user can rent
 			user.validateCanReturnBina();
 			
 			//validate station can rent
 			StationClient stationCli = getStation(stationId);
-			int prize = stationCli.returnBina();
+			int prize = 0;
+			try {
+				prize = stationCli.returnBinaAsync().get().getReturnBina();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 			//apply rent action to user
 			user.effectiveReturn(prize);
+			setBalance(email, user.getCredit());
 		}		
-		setBalance(email, user.getCredit());
 	}
 
 	public StationClient getStation(String stationId) throws StationNotFoundException {

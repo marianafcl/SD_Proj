@@ -15,7 +15,7 @@ import org.binas.station.domain.exception.NoSlotAvailException;
  * below "map" the Java class to the WSDL definitions.
  */
 @WebService(endpointInterface = "org.binas.station.ws.StationPortType",
-            wsdlLocation = "station.wsdl",
+            wsdlLocation = "station.2_0.wsdl",
             name ="StationWebService",
             portName = "StationPort",
             targetNamespace="http://ws.station.binas.org/",
