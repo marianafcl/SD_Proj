@@ -20,6 +20,7 @@ import org.binas.station.ws.GetBalanceResponse;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.ResponseServerView;
+import org.binas.station.ws.SetBalanceResponse;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
 import org.binas.ws.StationView;
@@ -73,8 +74,10 @@ public class BinasManager {
 	}
 	
 	public void rentBina(String stationId, String email) throws UserNotFoundException, InsufficientCreditsException, UserAlreadyHasBinaException, StationNotFoundException, NoBinaAvail_Exception {
+		int[] infoClient = getBalance(email);
 		User user = getUser(email);
 		synchronized (user) {
+		
 			//validate user can rent
 			user.validateCanRentBina();
 
@@ -85,9 +88,11 @@ public class BinasManager {
 			//apply rent action to user
 			user.effectiveRent();
 		}
+		setBalance(email, user.getCredit());
 	}
 	
 	public void returnBina(String stationId, String email) throws UserNotFoundException, NoSlotAvail_Exception, UserHasNoBinaException, StationNotFoundException {
+		int[] infoClient = getBalance(email);
 		User user = getUser(email);
 		synchronized (user) {
 			//validate user can rent
@@ -100,6 +105,7 @@ public class BinasManager {
 			//apply rent action to user
 			user.effectiveReturn(prize);
 		}		
+		setBalance(email, user.getCredit());
 	}
 
 	public StationClient getStation(String stationId) throws StationNotFoundException {
@@ -186,34 +192,28 @@ public class BinasManager {
 		return aux; 
 	}
 	
-	public void setBalance(String email, int credit, int tag) {
+	public void setBalance(String email, int credit) throws UserNotFoundException {
 		int[] clientInfo = getBalance(email);
 		if(clientInfo == null) {
-			return nao sei o que ele faz;
+			throw new UserNotFoundException();
 		}
 		Collection<String> stations = getStations();
 		User user = null;
 		boolean fault = false;
 		int stationsResponses = 0;
-		ArrayList<int[]> infoClients = new ArrayList<>();
+		int auxTag = clientInfo[1] + 1;
 		for(String station : stations) {
 			if(stationsResponses == 2) {
 				break;
 			}
 			try {
 				StationClient stationCli = getStation(station);
-				Response<GetBalanceResponse> response = stationCli.getBalanceAsync(email);
+				Response<SetBalanceResponse> response = stationCli.setBalanceAsync(email, credit, auxTag);
 				while (!response.isDone()) {
 			            Thread.sleep(100);
-			     }
-				 ResponseServerView responseServerView = response.get().getServerResponse();
-				 if(responseServerView != null) {
-					 int[] aux3 = {responseServerView.getCredit(), responseServerView.getTag()};
-					 infoClients.add(aux3);
-				 }
-				 stationsResponses++;
-				 
-			} catch (StationNotFoundException | InterruptedException | ExecutionException e) {
+			    }
+				stationsResponses++;
+			} catch (StationNotFoundException | InterruptedException e) {
 				if(fault == true) {
 					e.printStackTrace();
 				}
@@ -222,7 +222,9 @@ public class BinasManager {
 		        }
 			}
 		}
-		int[] aux = {user.getCredit(), user.getTag()};
+		user = BinasManager.getInstance().getUser(email);
+		user.setBalance(credit);
+		user.setTag(auxTag);
 	}
 	
 	

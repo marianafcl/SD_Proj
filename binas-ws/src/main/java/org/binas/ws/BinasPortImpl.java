@@ -57,7 +57,12 @@ public class BinasPortImpl implements BinasPortType {
 				user.setTag(aux[1]);
 				throw new UserAlreadyExistsException();
 			}
-			BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit(), user.getTag());
+			try {
+				BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit());
+			} catch (UserNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 				
 			//Create and populate userView
 			UserView userView = new UserView();
@@ -155,13 +160,11 @@ public class BinasPortImpl implements BinasPortType {
 
 	@Override
 	public int getCredit(String email) throws UserNotExists_Exception {
-		try {
-			User user = BinasManager.getInstance().getUser(email);	
-			return user.getCredit();
-		} catch (UserNotFoundException e) {
+		int[] infoClient = BinasManager.getInstance().getBalance(email);
+		if(infoClient == null) {
 			throwUserNotExists("User not found: " + email);
 		}
-		return 0;
+		return infoClient[0];
 	}
 	
 	// Auxiliary operations --------------------------------------------------
