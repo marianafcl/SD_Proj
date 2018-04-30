@@ -78,6 +78,7 @@ public class Station {
  		
 		totalGets.set(0);
 		totalReturns.set(0);
+		clientsLists.clear();
 	}
  	
  	public void setId(String id) {
