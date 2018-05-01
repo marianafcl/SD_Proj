@@ -75,7 +75,10 @@ public class StationPortImpl implements StationPortType {
 	@Override
 	public ResponseServerView getBalance(String email) {
 		Station station = Station.getInstance();
-		return buildResponseServerView(station.getBalance(email));
+		if(email == null) {
+			return buildResponseServerView(station.getBalance(email));	
+		}
+		return null;
 	}
 
 	@Override

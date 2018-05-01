@@ -87,6 +87,7 @@ public class Station {
 
  	/** Synchronized locks object before attempting to return Bina */
 	public synchronized int returnBina() throws NoSlotAvailException {
+		System.out.println(getFreeDocks());
 		if(getFreeDocks() == 0)
 			throw new NoSlotAvailException();
 		freeDocks.decrementAndGet();
@@ -96,6 +97,7 @@ public class Station {
 
 	/** Synchronized locks object before attempting to get Bina */
 	public synchronized void getBina() throws NoBinaAvailException {
+		System.out.println(getFreeDocks());
 		if(getFreeDocks() == getMaxCapacity())
 			throw new NoBinaAvailException();
 		freeDocks.incrementAndGet();
@@ -144,6 +146,9 @@ public class Station {
     }
     
     public int[] getBalance(String email) {
+    	if(email == null) {
+    		return null;
+    	}
     	return clientsLists.get(email);
     }
     

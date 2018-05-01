@@ -19,6 +19,7 @@ import org.binas.station.ws.GetBalanceResponse;
 import org.binas.station.ws.NoBinaAvail_Exception;
 import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.ResponseServerView;
+import org.binas.station.ws.ReturnBinaResponse;
 import org.binas.station.ws.SetBalanceResponse;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
@@ -99,7 +100,8 @@ public class BinasManager {
 			StationClient stationCli = getStation(stationId);
 			int prize = 0;
 			try {
-				prize = stationCli.returnBinaAsync().get().getReturnBina();
+				ReturnBinaResponse aux = stationCli.returnBinaAsync().get();
+				prize = aux.getReturnBina();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

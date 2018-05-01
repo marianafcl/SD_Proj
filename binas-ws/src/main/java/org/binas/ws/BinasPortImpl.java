@@ -45,32 +45,36 @@ public class BinasPortImpl implements BinasPortType {
 	}
 
 	@Override
-	public UserView activateUser(String email) throws InvalidEmail_Exception, EmailExists_Exception {
-		try {
-			int[] aux = BinasManager.getInstance().getBalance(email);
-			
-			if(aux != null) {
-				throw new UserAlreadyExistsException();
-			}
-			User user = BinasManager.getInstance().createUser(email);
+	public UserView activateUser(String email) throws InvalidEmail_Exception, EmailExists_Exception {	
+		if (email != null) {
 			try {
-				BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit());
-			} catch (UserNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+				int[] aux = BinasManager.getInstance().getBalance(email);
+			
+				if(aux != null) {
+					throw new UserAlreadyExistsException();
+				}
+				User user = BinasManager.getInstance().createUser(email);
+				try {
+					BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit());
+				} catch (UserNotFoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				
-			//Create and populate userView
-			UserView userView = new UserView();
-			userView.setEmail(user.getEmail());
-			userView.setCredit(user.getCredit());
-			userView.setHasBina(user.getHasBina());
-			return userView;
-		} catch (UserAlreadyExistsException e) {
-			throwEmailExists("Email already exists: " + email);
-		} catch (InvalidEmailException e) {
-			throwInvalidEmail("Invalid email: " + email);
+				//Create and populate userView
+				UserView userView = new UserView();
+				userView.setEmail(user.getEmail());
+				userView.setCredit(user.getCredit());
+				userView.setHasBina(user.getHasBina());
+				return userView;
+			} catch (UserAlreadyExistsException e) {
+				throwEmailExists("Email already exists: " + email);
+			} catch (InvalidEmailException e) {
+				throwInvalidEmail("Invalid email: " + email);
+			}
+			return null;
 		}
+		throwInvalidEmail("Invalid email: " + email);
 		return null;
 	}
 
