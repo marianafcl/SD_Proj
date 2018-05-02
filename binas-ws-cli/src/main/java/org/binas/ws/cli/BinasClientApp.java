@@ -64,9 +64,19 @@ public class BinasClientApp {
         
         while(true) {
         	int credit = client.getCredit(email);
-        	System.out.println("Getting credit...");
-        	System.out.println("User:" + email + "has" + credit + "credit");
+        	System.out.println("	Getting credit...");
+        	System.out.println("	User:" + email + "has" + credit + "credit");
         	
+        	System.out.println("Unsafe to reset Bina!!!");
+        	client.rentBina(station1, email);
+        	System.out.println("	Renting bina...");
+        	System.out.println("	Renting bina from " + station1 + "with email:" + email);
+       	
+        	client.returnBina(station1, email);
+        	System.out.println("	Returning bina...");
+        	System.out.println("	Returning bina to " + station1 + "with email:" + email);
+        	
+        	System.out.println("Safe to reset Bina!!!");
         	Thread.sleep(10000);
         }
         
