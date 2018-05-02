@@ -23,11 +23,11 @@ public class ActivateUserIT extends BaseIT  {
 	// members
 
 	// initialization and clean-up for each test
-	@Before
-	public void setUp() throws BadInit_Exception {
-		binasTestClear();
-		client.testInit(USER_POINTS);
-	}
+	//@Before
+	//public void setUp() throws BadInit_Exception {
+	//	binasTestClear();
+	//	client.testInit(USER_POINTS);
+	//}
 
 	@After
 	public void tearDown() {

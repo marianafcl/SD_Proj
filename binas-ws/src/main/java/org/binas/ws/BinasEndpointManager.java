@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import javax.xml.ws.Endpoint;
 
+import org.binas.domain.BinasManager;
+
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 
 /** End point manager */
@@ -87,12 +89,22 @@ public class BinasEndpointManager {
 	}
 
 	public void awaitConnections() {
+		boolean flag = true;
 		if (verbose) {
 			System.out.println("Awaiting connections");
-			System.out.println("Press enter to shutdown");
+			System.out.println("Press R to reset and S to shutdown");
+			
 		}
 		try {
-			System.in.read();
+			while(flag) {
+				int aux = System.in.read();
+				if(aux == 83 || aux == 115) { //S
+					flag = false;
+				}
+				if(aux == 82 || aux == 114) { //R
+					BinasManager.getInstance().reset();
+				}
+			}
 		} catch (IOException e) {
 			if (verbose) {
 				System.out.printf("Caught i/o exception when awaiting requests: %s%n", e);

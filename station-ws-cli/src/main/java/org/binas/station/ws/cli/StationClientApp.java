@@ -42,6 +42,29 @@ public class StationClientApp {
 		String result = client.testPing("client");
 		System.out.print("Result: ");
 		System.out.println(result);
+		
+		StationClient client2 = new StationClient(uddiURL, "A48_Station2");
+		StationClient client3 = new StationClient(uddiURL, "A48_Station3");
+		System.out.println("Press 1 to reset Station1, 2 for Station2 and 3 for Station3");
+		System.out.println("Press S to shutdown");
+		boolean flag = true;
+		while(flag) {
+			switch(System.in.read()) {
+				case 49:
+					client.testClear();
+					break;
+				case 50:
+					client.testClear();
+					break;
+				case 51:
+					client.testClear();
+					break;
+				case 83:
+				case 115:
+					flag = false;
+					break;
+			}
+		}
 	}
 
 }
