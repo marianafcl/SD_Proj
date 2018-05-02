@@ -54,10 +54,10 @@ public class StationClientApp {
 					client.testClear();
 					break;
 				case 50:
-					client.testClear();
+					client2.testClear();
 					break;
 				case 51:
-					client.testClear();
+					client3.testClear();
 					break;
 				case 83:
 				case 115:

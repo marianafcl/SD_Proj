@@ -162,7 +162,7 @@ public class BinasPortImpl implements BinasPortType {
 	public synchronized int getCredit(String email) throws UserNotExists_Exception {
 			int[] infoClient = BinasManager.getInstance().getBalance(email);
 			if(infoClient == null) {
-				System.out.println("\n\n\n\n\n\n" + infoClient + "\n\n\n\n\n\n");
+				
 				throwUserNotExists("User not found: " + email);
 			}
 			return infoClient[0];

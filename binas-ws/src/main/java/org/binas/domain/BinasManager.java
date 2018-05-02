@@ -158,12 +158,10 @@ public class BinasManager {
 					StationClient stationCli = getStation(station);
 					Response<GetBalanceResponse> response = stationCli.getBalanceAsync(email);
 					while (!response.isDone()) {
-						System.out.println("esperando resposta");
 						Thread.sleep(100);
 					}
 					ResponseServerView responseServerView = response.get().getServerResponse();
 					if(responseServerView.getTag() != -1 && responseServerView.getCredit() != -1) {
-						System.out.println("resposta do server diferente de null");
 						int[] aux3 = {responseServerView.getCredit(), responseServerView.getTag()};
 						infoClients.add(aux3);
 					}

@@ -1,21 +1,16 @@
 package org.binas.station.ws.it;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import org.binas.station.ws.BadInit_Exception;
-import org.binas.station.ws.NoBinaAvail_Exception;
-import org.binas.station.ws.StationView;
+import org.binas.station.ws.ResponseServerView;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * class that tests Bina retrieval
- */
-public class GetBinaIT extends BaseIT {
+public class SetBalanceIT extends BaseIT{
 	private final static int X = 5;
 	private final static int Y = 5;
 	private final static int CAPACITY = 20;
@@ -50,30 +45,20 @@ public class GetBinaIT extends BaseIT {
 
 	/** Try to get a Bina , get one verify, one rented (less). */
 	@Test
-	public void getBinaOneTest() throws NoBinaAvail_Exception, BadInit_Exception {
-		client.getBina();
+	public void setBalanceCreateNewClient() {
+		client.setBalance("a.a@b.b", 20, 2);
 
-		StationView view = client.getInfo();
-		assertNotNull(view);
-		assertEquals(CAPACITY - 1, view.getAvailableBinas());
+		assertEquals(20, client.getBalance("a.a@b.b").getCredit());
+		assertEquals(2, client.getBalance("a.a@b.b").getTag());
 	}
 	
 	@Test
-	public void getBinaAllTest() throws NoBinaAvail_Exception, BadInit_Exception {
-		for(int i = 0; i < CAPACITY; i++)
-			client.getBina();
-
-		StationView view = client.getInfo();
-		assertNotNull(view);
-		assertEquals(0, view.getAvailableBinas());
+	public void setBalance() {
+		client.setBalance("c.c@b.b", 20, 2);
+		client.setBalance("c.c@b.b", 30, 3);
+		assertEquals(30, client.getBalance("c.c@b.b").getCredit());
+		assertEquals(3, client.getBalance("c.c@b.b").getTag());
 	}
 	
-	@Test(expected = NoBinaAvail_Exception.class)
-	public void getBinaNoBinaTest() throws NoBinaAvail_Exception, BadInit_Exception {
-		for(int i = 0; i <= CAPACITY; i++)
-			client.getBina();
-	}
-
 	
-
 }

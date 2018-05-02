@@ -75,7 +75,6 @@ public class StationPortImpl implements StationPortType {
 	@Override
 	public ResponseServerView getBalance(String email) {
 		Station station = Station.getInstance();
-		System.out.println("macarenas do stations port impl\n");
 		if(email != null) {
 			return buildResponseServerView(station.getBalance(email));	
 		}

@@ -144,25 +144,16 @@ public class Station {
     }
     
     public int[] getBalance(String email) {
-    	System.out.println("boas put, entrei aqui no otario do get balance\n");
-    	/*if(email == null) {
-    		return null;
-    	}*/
-    	
     	if(clientsLists.containsKey(email) == false) {
     		int[] aux = {-1,-1};
     		return aux;
     	}
-    	System.out.println("credito da station" + clientsLists.get(email)[0]);
-    	System.out.println("tag da station" + clientsLists.get(email)[1]);
     	return clientsLists.get(email);
     }
     
     public void setBalance(String email, int credit, int tag) {
     	int aux[] = {credit, tag};
-  
     	clientsLists.put(email, aux);
-    	System.out.println("galera, estou no set balance. eu put cenas no clientList :" + clientsLists.get(email));
     }
     
     
