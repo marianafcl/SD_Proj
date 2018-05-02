@@ -75,10 +75,12 @@ public class StationPortImpl implements StationPortType {
 	@Override
 	public ResponseServerView getBalance(String email) {
 		Station station = Station.getInstance();
-		if(email == null) {
+		System.out.println("macarenas do stations port impl\n");
+		if(email != null) {
 			return buildResponseServerView(station.getBalance(email));	
 		}
-		return null;
+		int[] aux = {-1,-1};
+		return buildResponseServerView(aux);
 	}
 
 	@Override
@@ -149,10 +151,7 @@ public class StationPortImpl implements StationPortType {
 	}
 	
 	private ResponseServerView buildResponseServerView(int[] balance) {
-		if(balance == null) {
-			return null;
-		}
-		ResponseServerView responseServerView = new ResponseServerView();
+		ResponseServerView responseServerView = new ResponseServerView();		
 		responseServerView.setCredit(balance[0]);
 		responseServerView.setTag(balance[1]);
 		return responseServerView;

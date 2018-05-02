@@ -17,6 +17,10 @@ import org.binas.ws.UserNotExists_Exception;
 public class BinasClientApp {
 
     public static void main(String[] args) throws Exception {
+    	String email = "a.a@b.b";
+    	String station1 = "A48_Station1";
+    	String station2 = "A48_Station2";
+    	String station3 = "A48_Station3";
         // Check arguments
         if (args.length == 0) {
             System.err.println("Argument(s) missing!");
@@ -52,6 +56,27 @@ public class BinasClientApp {
         System.out.println("Invoke ping()...");
         String result = client.testPing("client");
         System.out.print(result);
+        
+        client.activateUser(email);
+        client.testInitStation(station1, 22, 7, 6, 1);
+        client.testInitStation(station2, 22, 7, 6, 1);
+        client.testInitStation(station3, 22, 7, 6, 1);
+        
+        while(true) {
+        	int credit = client.getCredit(email);
+        	System.out.println("Getting credit...");
+        	System.out.println("User:" + email + "has" + credit + "credit");
+        	
+        	/*client.rentBina(station1, email);
+        	System.out.println("Renting bina...");
+        	System.out.println("Renting bina from " + station1 + "with email:" + email);
+        	
+        	client.returnBina(station1, email);
+        	System.out.println("Returning bina...");
+        	System.out.println("Returning bina to " + station1 + "with email:" + email);*/
+        	
+        	Thread.sleep(10000);
+        }
         
 	 }
 }

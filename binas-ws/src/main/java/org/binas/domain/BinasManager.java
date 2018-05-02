@@ -17,12 +17,14 @@ import org.binas.domain.exception.UserNotFoundException;
 import org.binas.station.ws.BadInit_Exception;
 import org.binas.station.ws.GetBalanceResponse;
 import org.binas.station.ws.NoBinaAvail_Exception;
+import org.binas.station.ws.NoSlotAvail;
 import org.binas.station.ws.NoSlotAvail_Exception;
 import org.binas.station.ws.ResponseServerView;
 import org.binas.station.ws.ReturnBinaResponse;
 import org.binas.station.ws.SetBalanceResponse;
 import org.binas.station.ws.cli.StationClient;
 import org.binas.station.ws.cli.StationClientException;
+import org.binas.station.ws.NoBinaAvail;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINamingException;
@@ -71,45 +73,47 @@ public class BinasManager {
 	public User getUser(String email) throws UserNotFoundException {
 		return UsersManager.getInstance().getUser(email);
 	}
-	
-	public void rentBina(String stationId, String email) throws UserNotFoundException, InsufficientCreditsException, UserAlreadyHasBinaException, StationNotFoundException, NoBinaAvail_Exception {
+
+	public void rentBina(String stationId, String email) throws UserNotFoundException, InsufficientCreditsException, 
+	UserAlreadyHasBinaException, StationNotFoundException, NoBinaAvail_Exception {
+		getBalance(email);
 		User user = getUser(email);
 		synchronized (user) {
-			getBalance(email);
+
 			//validate user can rent
 			user.validateCanRentBina();
 
 			//validate station can rent
 			StationClient stationCli = getStation(stationId);
-			stationCli.getBinaAsync();
-			
+			try {
+				stationCli.getBinaAsync().get();
+			} catch(Exception e) {
+				throw new NoBinaAvail_Exception(e.getCause().getMessage(), new NoBinaAvail());
+			}
 			//apply rent action to user
 			user.effectiveRent();
 			setBalance(email, user.getCredit());
 		}
 	}
-	
+
 	public void returnBina(String stationId, String email) throws UserNotFoundException, NoSlotAvail_Exception, UserHasNoBinaException, StationNotFoundException {
+		getBalance(email);
 		User user = getUser(email);
 		synchronized (user) {
-			getBalance(email);
+
 			//validate user can rent
 			user.validateCanReturnBina();
-			
+
 			//validate station can rent
 			StationClient stationCli = getStation(stationId);
 			int prize = 0;
 			try {
 				ReturnBinaResponse aux = stationCli.returnBinaAsync().get();
 				prize = aux.getReturnBina();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ExecutionException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (Exception e) {
+				throw new NoSlotAvail_Exception(e.getCause().getMessage(), new NoSlotAvail());
 			}
-			
+
 			//apply rent action to user
 			user.effectiveReturn(prize);
 			setBalance(email, user.getCredit());
@@ -120,7 +124,7 @@ public class BinasManager {
 
 		Collection<String> stations = this.getStations();
 		String uddiUrl = BinasManager.getInstance().getUddiURL();
-		
+
 		for (String s : stations) {
 			try {
 				StationClient sc = new StationClient(uddiUrl, s);
@@ -133,10 +137,10 @@ public class BinasManager {
 				continue;
 			}
 		}
-		
+
 		throw new StationNotFoundException();
 	}
-	
+
 	public int[] getBalance(String email) {
 		Collection<String> stations = getStations();
 		User user = null;
@@ -153,23 +157,25 @@ public class BinasManager {
 				try {
 					StationClient stationCli = getStation(station);
 					Response<GetBalanceResponse> response = stationCli.getBalanceAsync(email);
-					 while (!response.isDone()) {
-				            Thread.sleep(100);
-				     }
-					 ResponseServerView responseServerView = response.get().getServerResponse();
-					 if(responseServerView != null) {
-						 int[] aux3 = {responseServerView.getCredit(), responseServerView.getTag()};
-						 infoClients.add(aux3);
-					 }
-					 stationsResponses++;
-					 
+					while (!response.isDone()) {
+						System.out.println("esperando resposta");
+						Thread.sleep(100);
+					}
+					ResponseServerView responseServerView = response.get().getServerResponse();
+					if(responseServerView.getTag() != -1 && responseServerView.getCredit() != -1) {
+						System.out.println("resposta do server diferente de null");
+						int[] aux3 = {responseServerView.getCredit(), responseServerView.getTag()};
+						infoClients.add(aux3);
+					}
+					stationsResponses++;
+
 				} catch (StationNotFoundException | InterruptedException | ExecutionException e) {
 					if(fault == true) {
 						e.printStackTrace();
-		            }
-		            else {
-		                fault = true;
-		            }
+					}
+					else {
+						fault = true;
+					}
 				} 	
 			}
 			if(infoClients.isEmpty()) {
@@ -179,7 +185,7 @@ public class BinasManager {
 			for(int i = 1; i < infoClients.size(); i++) {
 				if(infoClients.get(i)[1] > maxValue[1]) {
 					maxValue = infoClients.get(i);
-					
+
 				}
 			}
 			try {
@@ -193,13 +199,13 @@ public class BinasManager {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			return maxValue;
 		}
 		int[] aux = {user.getCredit(), user.getTag()};
 		return aux; 
 	}
-	
+
 	public void setBalance(String email, int credit) throws UserNotFoundException {
 		int[] clientInfo = getBalance(email);
 		if(clientInfo == null) {
@@ -218,24 +224,24 @@ public class BinasManager {
 				StationClient stationCli = getStation(station);
 				Response<SetBalanceResponse> response = stationCli.setBalanceAsync(email, credit, auxTag);
 				while (!response.isDone()) {
-			            Thread.sleep(100);
-			    }
+					Thread.sleep(100);
+				}
 				stationsResponses++;
 			} catch (StationNotFoundException | InterruptedException e) {
 				if(fault == true) {
 					e.printStackTrace();
 				}
-		        else {
-		        	fault = true;
-		        }
+				else {
+					fault = true;
+				}
 			}
 		}
 		user = BinasManager.getInstance().getUser(email);
 		user.setBalance(credit);
 		user.setTag(auxTag);
 	}
-	
-	
+
+
 	// UDDI ------------------------------------------------------------------
 
 	public void initUddiURL(String uddiURL) {
@@ -312,6 +318,6 @@ public class BinasManager {
 		} catch (BadInit_Exception e) {
 			throw new BadInitException(e.getMessage());
 		}
-		
+
 	}
 }
