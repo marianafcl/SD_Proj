@@ -209,49 +209,41 @@ public class StationClient implements StationPortType {
 	@Override
 	public Future<?> testInitAsync(int x, int y, int capacity, int returnPrize,
 			AsyncHandler<TestInitResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public Future<?> testClearAsync(AsyncHandler<TestClearResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public Future<?> testPingAsync(String inputMessage, AsyncHandler<TestPingResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public Future<?> returnBinaAsync(AsyncHandler<ReturnBinaResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public Future<?> getBinaAsync(AsyncHandler<GetBinaResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Future<?> getBalanceAsync(String email, AsyncHandler<GetBalanceResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public Future<?> getInfoAsync(AsyncHandler<GetInfoResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public Future<?> setBalanceAsync(String email, int credit, int tag, AsyncHandler<SetBalanceResponse> asyncHandler) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

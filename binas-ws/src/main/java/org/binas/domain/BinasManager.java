@@ -191,10 +191,8 @@ public class BinasManager {
 				user.setBalance(maxValue[0]);
 				user.setTag(maxValue[1]);
 			} catch (UserAlreadyExistsException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (InvalidEmailException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 

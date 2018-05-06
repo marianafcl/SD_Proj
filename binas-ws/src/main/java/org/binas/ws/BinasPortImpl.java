@@ -57,7 +57,6 @@ public class BinasPortImpl implements BinasPortType {
 				try {
 					BinasManager.getInstance().setBalance(user.getEmail(), user.getCredit());
 				} catch (UserNotFoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
