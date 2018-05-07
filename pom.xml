@@ -14,7 +14,8 @@
 
     <modules>
         <!-- modules to include in the build reactor -->
-        <module>uddi-naming</module>      
+        <module>uddi-naming</module>
+        <module>kerby</module>
       
         <module>station-ws</module>
         <module>station-ws-cli</module>
