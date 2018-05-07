@@ -66,7 +66,7 @@ public class KerbyExperiment {
         String server = "binas@CXX.binas.org"; /*constant*/
         String email = "alice@CXX.binas.org";
         String client_password = "Zd8hqDu23t"; /*get this argument in binas-ws-cli methods along with email*/
-        String url = "http://localhost:8888/kerby"; /*must be unique for each binas-ws-cli (?)*/
+        String url = "http://localhost:8888/kerby"; /*constant*/
         
         int duration = 60; /*Cyclical? Short session.*/
         long nounce = new Random().nextLong(); /*Is random ok? Based on password?*/
@@ -119,6 +119,7 @@ public class KerbyExperiment {
         
         
         Ticket ticket = new Ticket(cipheredTicket, ks);
+        ticket.validate();
         
         System.out.print("Server's Ticket (KCS included): "); System.out.println(ticket);
         
