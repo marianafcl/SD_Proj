@@ -57,7 +57,7 @@ public class BinasClientApp {
         String result = client.testPing("client");
         System.out.print(result);
         
-        client.activateUser(email);
+        /*client.activateUser(email);
         client.testInitStation(station1, 22, 7, 6, 1);
         client.testInitStation(station2, 22, 7, 6, 1);
         client.testInitStation(station3, 22, 7, 6, 1);
@@ -78,7 +78,7 @@ public class BinasClientApp {
         	
         	System.out.println("Safe to reset Bina!!!");
         	Thread.sleep(10000);
-        }
+        }*/
         
 	 }
 }

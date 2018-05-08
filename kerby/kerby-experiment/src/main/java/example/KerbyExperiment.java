@@ -99,7 +99,7 @@ public class KerbyExperiment {
         CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
         
         /*handler sends ticket+auth views (ciphered ticket and cv) + request*/
-        
+        // FALTA OS MACS EHEHEHHEHEHEHEHHEHEHEHEHEHEHHEHEHEHEHEHEH
         System.out.println();
 
         
