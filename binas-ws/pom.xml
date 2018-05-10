@@ -56,6 +56,12 @@
 	            <artifactId>ws-handlers</artifactId>
     			<version>1.1-SNAPSHOT</version>
 	        </dependency>
+	         <!-- Kerby -->
+	     <dependency>
+	        <groupId>pt.ulisboa.tecnico.sdis</groupId>
+    		<artifactId>kerby-lib</artifactId>
+    		<version>1.0</version>	     
+    	</dependency>
 	    </dependencies>
 
 	<build>

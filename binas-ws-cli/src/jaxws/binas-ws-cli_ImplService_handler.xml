@@ -47,7 +47,7 @@
             Print the SOAP message with added indentation for easier reading.
         -->
         <handler>
-            <handler-class>example.ws.handler.PrettyLogHandler</handler-class>
+            <handler-class>org.binas.ws.handler.KerberosClientHandler</handler-class>
         </handler>
 
 	</handler-chain>

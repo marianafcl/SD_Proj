@@ -19,7 +19,20 @@ import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClient;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
 
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Arrays;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
+
+
 public class KerbyExperiment {
+	private static final String MAC_ALGO = "HmacSHA256";
 
     public static void main(String[] args) throws Exception {
         System.out.println("Hi!");
@@ -56,7 +69,6 @@ public class KerbyExperiment {
         // TODO both client (binas-ws-cli) and server (binas-ws) communicate
         //		with kerby-ws-cli for authentication via kerby-lib
         // TODO pom dependency of above modules on kerby-lib
-        
         
         
         
@@ -100,6 +112,20 @@ public class KerbyExperiment {
         
         /*handler sends ticket+auth views (ciphered ticket and cv) + request*/
         // FALTA OS MACS EHEHEHHEHEHEHEHHEHEHEHEHEHEHHEHEHEHEHEHEH
+        
+        /*Mac Request */
+        Key kcs = sessionkey.getKeyXY();
+        /** Plain text to protect with the message authentication code. */
+    	final String plainText = "This is the plain text!";
+    	/** Plain text bytes. */
+    	final byte[] plainBytes = plainText.getBytes();
+    	
+    	// make MAC
+    	System.out.println("Signing ...");
+    	byte[] cipherDigest = makeMAC(plainBytes, kcs);
+    	System.out.println("CipherDigest:");
+    	System.out.println(printHexBinary(cipherDigest));
+        
         System.out.println();
 
         
@@ -125,7 +151,7 @@ public class KerbyExperiment {
         System.out.print("Server's Ticket (KCS included): "); System.out.println(ticket);
         
         
-        Key kcs = ticket.getKeyXY();
+        kcs = ticket.getKeyXY();
         Auth auth = new Auth(cipheredAuth, kcs);
         auth.validate();
         
@@ -136,10 +162,15 @@ public class KerbyExperiment {
         
         System.out.print("Server's Client's Auth: {"); System.out.print(auth.getX()); System.out.print("; "); System.out.print(auth.getTimeRequest()); System.out.println("}");
         
+        // verify the MAC
+     	System.out.println("Verifying ...");
+     	boolean resultAux = verifyMAC(cipherDigest, plainBytes, kcs);
+     	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
    
         CipheredView cipheredTimeRequest = (new RequestTime(auth.getTimeRequest())).cipher(kcs);
         
         /*handler sends timerequest view (cipheredTimeRequest) + response*/
+        /**TODO Gerar novamente MAC para enviar para o cliente**/
         
         System.out.println();
         
@@ -161,4 +192,24 @@ public class KerbyExperiment {
 		
 		System.out.println("Bye!");
     }
+    
+    /** Makes a message authentication code. */
+    private static byte[] makeMAC(byte[] bytes, Key key) throws Exception {
+
+    	Mac cipher = Mac.getInstance(MAC_ALGO);
+    	cipher.init(key);
+    	byte[] cipherDigest = cipher.doFinal(bytes);
+
+    	return cipherDigest;
+    }
+    
+    
+    private static boolean verifyMAC(byte[] cipherDigest, byte[] bytes, Key key) throws Exception {
+
+		byte[] cipheredBytes = makeMAC(bytes, key);
+		return Arrays.equals(cipherDigest, cipheredBytes);
+	}
+
 }
+
+
