@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.crypto.Cipher;
+import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.Name;
 import javax.xml.soap.Node;
@@ -36,6 +37,7 @@ import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.MessageContext.Scope;
 
 import pt.ulisboa.tecnico.sdis.kerby.BadTicketRequest_Exception;
+import pt.ulisboa.tecnico.sdis.kerby.CipherClerk;
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
@@ -129,21 +131,16 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 	     	 		String encodedSecretArgument = printBase64Binary(cipheredArgument);
 	     	 		argument.setTextContent(encodedSecretArgument);*/
 				
+				/*TODO fix url*/
 				Name name = se.createName("TicketHeader", "ticket", url);
 				SOAPHeaderElement element = sh.addHeaderElement(name);
-				
-				
-				/*Perguntar se está bem*/
-				String string = new String(cipheredTicket.getData(), "UTF-8");
-				element.addTextNode(string);
-				
+				CipherClerk clerk = new CipherClerk();
+				element.addChildElement(clerk.cipherToXMLNode(cipheredTicket, "TicketHeader").getLocalName());
+			
 				Name nameAuth = se.createName("AuthHeader", "auth", url);
 				SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
-				
-				
-				/*Perguntar se está bem*/
-				string = new String(cipheredAuth.getData(), "UTF-8");
-				elementAuth.addTextNode(string);
+				elementAuth.addChildElement(clerk.cipherToXMLNode(cipheredAuth, "AuthHeader").getLocalName());
+		
 				
 				msg.saveChanges();
 			}
@@ -172,6 +169,9 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (KerbyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JAXBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
