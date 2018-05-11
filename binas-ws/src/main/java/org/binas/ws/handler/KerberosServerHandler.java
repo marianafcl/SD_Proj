@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.Name;
 import javax.xml.soap.SOAPBody;
@@ -21,6 +22,7 @@ import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 
 import pt.ulisboa.tecnico.sdis.kerby.Auth;
+import pt.ulisboa.tecnico.sdis.kerby.CipherClerk;
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
@@ -46,6 +48,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
 			
+			//Get Ticket
 			Name name = se.createName("TicketHeader", "ticket", url);
 			Iterator<?> it = sh.getChildElements(name);
 			// check header element
@@ -55,12 +58,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 			}
 			SOAPElement element = (SOAPElement) it.next();
 			
-			String valueString = element.getValue();
-			byte[] b = valueString.getBytes();
-			
-			CipheredView cipheredTicket = new CipheredView();
-			cipheredTicket.setData(b);
-			
+			//Get Auth
 			Name nameAuth = se.createName("AuthHeader", "auth", url);
 			it = sh.getChildElements(nameAuth);
 			// check header element
@@ -70,11 +68,11 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 			}
 			SOAPElement elementAuth = (SOAPElement) it.next();
 			
-			valueString = elementAuth.getValue();
-			byte[] bAuth = valueString.getBytes();
 			
-			CipheredView cipheredAuth = new CipheredView();
-			cipheredAuth.setData(bAuth);
+			
+			CipherClerk clerk = new CipherClerk();
+			CipheredView cipheredAuth = clerk.cipherFromXMLNode(elementAuth);
+			
 			
 			Key ks = SecurityHelper.generateKeyFromPassword(server_password);
 	        
@@ -108,6 +106,9 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidKeySpecException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JAXBException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

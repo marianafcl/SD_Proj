@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Random;
@@ -66,7 +67,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 		SOAPPart sp = msg.getSOAPPart();
 		SOAPEnvelope se;
 		try {
-			
+
 			se = sp.getEnvelope();
 			SOAPBody sb = se.getBody();
 			SOAPHeader sh = se.getHeader();
@@ -100,51 +101,46 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 						}
 					}
 				}
-				/*TODO Se key null, manda excepção???*/
-				System.out.println("Got KC.");
-
-				KerbyClient client = new KerbyClient(url);
-				SessionKeyAndTicketView result = client.requestTicket(email, server, nounce, duration);
-
-				System.out.println("Got client's ticket.");
-
-
-				CipheredView cipheredSessionKey = result.getSessionKey();
-				CipheredView cipheredTicket = result.getTicket();
-
-
-				SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
-				if(!(nounce == sessionkey.getNounce())) {
-					throw new KerbyException();
-				}
-				
-				CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
-				
-				System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
-				/*String secretArgument = argument.getTextContent();
-	     	 		// cipher message with symmetric key
-	     	 		ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-	     	 		byteOut.write(secretArgument.getBytes());
-	     	 		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-	     	 		cipher.init(Cipher.ENCRYPT_MODE, MyKeyManager.getSecretKey());
-	     	 		byte[] cipheredArgument = cipher.doFinal(byteOut.toByteArray());
-	     	 		String encodedSecretArgument = printBase64Binary(cipheredArgument);
-	     	 		argument.setTextContent(encodedSecretArgument);*/
-				
-				/*TODO fix url*/
-				Name name = se.createName("TicketHeader", "ticket", url);
-				SOAPHeaderElement element = sh.addHeaderElement(name);
-				CipherClerk clerk = new CipherClerk();
-				element.addChildElement(clerk.cipherToXMLNode(cipheredTicket, "TicketHeader").getLocalName());
-			
-				Name nameAuth = se.createName("AuthHeader", "auth", url);
-				SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
-				elementAuth.addChildElement(clerk.cipherToXMLNode(cipheredAuth, "AuthHeader").getLocalName());
-		
-				
-				msg.saveChanges();
 			}
-			
+			/*TODO Se key null, manda excepção???*/
+			System.out.println("Got KC.");
+
+			KerbyClient client = new KerbyClient(url);
+			SessionKeyAndTicketView result = client.requestTicket(email, server, nounce, duration);
+
+			System.out.println("Got client's ticket.");
+
+
+			CipheredView cipheredSessionKey = result.getSessionKey();
+			CipheredView cipheredTicket = result.getTicket();
+
+
+			SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
+			if(!(nounce == sessionkey.getNounce())) {
+				throw new KerbyException();
+			}
+
+			CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
+
+			System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
+
+			/*TODO fix url*/
+			Name name = se.createName("TicketHeader", "ticket", url);
+			SOAPHeaderElement element = sh.addHeaderElement(name);
+		
+			CipherClerk clerk = new CipherClerk();
+			element.addChildElement(clerk.cipherToXMLNode(cipheredTicket, "TicketHeader").getLocalName());
+
+			Name nameAuth = se.createName("AuthHeader", "auth", url);
+			SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
+			elementAuth.addChildElement(clerk.cipherToXMLNode(cipheredAuth, "AuthHeader").getLocalName());
+
+			/*sb.addChildElement(clerk.cipherToXMLNode(cipheredSessionKey, "KeySession").getLocalName());*/
+
+			smc.put("SessionKey", sessionkey.getKeyXY());
+			msg.saveChanges();
+
+
 			/* TODO Acrescentar o if, para ver se está a receber ou a ler*/
 
 		}	 catch (SOAPException e1) {
