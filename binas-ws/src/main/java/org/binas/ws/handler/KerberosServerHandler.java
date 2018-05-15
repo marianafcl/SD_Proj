@@ -31,15 +31,15 @@ import pt.ulisboa.tecnico.sdis.kerby.Ticket;
 public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 	private static final String server = "binas@A48.binas.org";
 	private static final String server_password = "FBiMOd9e";
-	private static final String url = "http://localhost:8888/kerby";
-	
+	private static final String url = "	http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
+
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
-		
+		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 		SOAPMessage msg = smc.getMessage();
 		SOAPPart sp = msg.getSOAPPart();
 		SOAPEnvelope se;
-		
+
 		try {
 			se = sp.getEnvelope();
 			SOAPBody sb = se.getBody();
@@ -47,55 +47,61 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 			if (sh == null) { sh = se.addHeader(); }
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
-			
-			//Get Ticket
-			Name name = se.createName("TicketHeader", "ticket", url);
-			Iterator<?> it = sh.getChildElements(name);
-			// check header element
-			if (!it.hasNext()) {
-				System.out.println("Header element not found.");
-				return true;
-			}
-			SOAPElement element = (SOAPElement) it.next();
-			
-			//Get Auth
-			Name nameAuth = se.createName("AuthHeader", "auth", url);
-			it = sh.getChildElements(nameAuth);
-			// check header element
-			if (!it.hasNext()) {
-				System.out.println("Header element not found.");
-				return true;
-			}
-			SOAPElement elementAuth = (SOAPElement) it.next();
-			
-			
-			
-			CipherClerk clerk = new CipherClerk();
-			CipheredView cipheredAuth = clerk.cipherFromXMLNode(elementAuth);
-			
-			
-			Key ks = SecurityHelper.generateKeyFromPassword(server_password);
-	        
-	        System.out.println("Got KS.");
-	        
-			
-			Ticket ticket = new Ticket(cipheredTicket, ks);
-	        ticket.validate();
-			
-			System.out.print("Server's Ticket (KCS included): "); System.out.println(ticket);
-	        
-	        
-	        Key kcs = ticket.getKeyXY();
-	        Auth auth = new Auth(cipheredAuth, kcs);
-	        auth.validate();
-	        
-	        Date now = new Date();
-	        if(!ticket.getX().equals(auth.getX()) || now.before(ticket.getTime1()) || now.after(ticket.getTime2())) {
-	        	throw new KerbyException();
-	        }
-	        
-	        System.out.print("Server's Client's Auth: {"); System.out.print(auth.getX()); System.out.print("; "); System.out.print(auth.getTimeRequest()); System.out.println("}");
 
+			if (outboundElement.booleanValue()) { }
+			else {
+				//Get Ticket
+				Name name = se.createName("TicketHeader", "ticket", url);
+				Iterator<?> it = sh.getChildElements(name);
+				// check header element
+				if (!it.hasNext()) {
+					System.out.println("Header element not found.");
+					return true;
+				}
+				SOAPElement element = (SOAPElement) it.next();
+
+				//Get Auth
+				Name nameAuth = se.createName("AuthHeader", "auth", url);
+				it = sh.getChildElements(nameAuth);
+				// check header element
+				if (!it.hasNext()) {
+					System.out.println("Header element not found.");
+					return true;
+				}
+				SOAPElement elementAuth = (SOAPElement) it.next();
+
+
+
+				CipherClerk clerk = new CipherClerk();
+				CipheredView cipheredAuth = clerk.cipherFromXMLNode(elementAuth);
+				CipheredView cipheredTicket = clerk.cipherFromXMLNode(element);
+
+
+				Key ks = SecurityHelper.generateKeyFromPassword(server_password);
+
+				System.out.println("Got KS.");
+
+
+				Ticket ticket = new Ticket(cipheredTicket, ks);
+				ticket.validate();
+
+				System.out.print("Server's Ticket (KCS included): "); System.out.println(ticket);
+
+
+				Key kcs = ticket.getKeyXY();
+				Auth auth = new Auth(cipheredAuth, kcs);
+				auth.validate();
+
+				Date now = new Date();
+				if(!ticket.getX().equals(auth.getX()) || now.before(ticket.getTime1()) || now.after(ticket.getTime2())) {
+					throw new KerbyException();
+				}
+
+				smc.put("SessionKey", kcs);
+				msg.saveChanges();
+
+				System.out.print("Server's Client's Auth: {"); System.out.print(auth.getX()); System.out.print("; "); System.out.print(auth.getTimeRequest()); System.out.println("}");
+			}
 		} catch (SOAPException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -112,7 +118,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return true;
 	}
 
@@ -125,7 +131,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 	@Override
 	public void close(MessageContext context) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override

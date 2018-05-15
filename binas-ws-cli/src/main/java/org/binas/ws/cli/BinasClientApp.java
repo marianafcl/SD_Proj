@@ -17,7 +17,7 @@ import org.binas.ws.UserNotExists_Exception;
 public class BinasClientApp {
 
     public static void main(String[] args) throws Exception {
-    	String email = "a.a@b.b";
+    	String email = "alice@A48.binas.org";
     	String station1 = "A48_Station1";
     	String station2 = "A48_Station2";
     	String station3 = "A48_Station3";
@@ -54,11 +54,11 @@ public class BinasClientApp {
         // the actual tests are made using JUnit
         
         System.out.println("Invoke ping()...");
-        String result = client.testPing("client");
-        System.out.print(result);
+        //String result = client.testPing("client");
+        //System.out.print(result);
         
-        /*client.activateUser(email);
-        client.testInitStation(station1, 22, 7, 6, 1);
+        client.activateUser(email);
+        /*client.testInitStation(station1, 22, 7, 6, 1);
         client.testInitStation(station2, 22, 7, 6, 1);
         client.testInitStation(station3, 22, 7, 6, 1);
         

@@ -9,6 +9,7 @@ import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -47,11 +48,12 @@ import pt.ulisboa.tecnico.sdis.kerby.SessionKeyAndTicketView;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClient;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClientException;
 import pt.ulisboa.tecnico.sdis.kerby.Auth;
+import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 
 public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
-	private static final String url = "http://localhost:8888/kerby";
-	private static final String server = "binas@CXX.binas.org";
+	private static final String url = 	"http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
+	private static final String server = "binas@A48.binas.org";
 
 	public Set<QName> getHeaders() {
 		return null;
@@ -63,11 +65,11 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 	 */
 	public boolean handleMessage(SOAPMessageContext smc) {
 		System.out.println("AddHeaderHandler: Handling message in client.");
+		Boolean outboundElement = (Boolean) smc.get(MessageContext.MESSAGE_OUTBOUND_PROPERTY);
 		SOAPMessage msg = smc.getMessage();
 		SOAPPart sp = msg.getSOAPPart();
 		SOAPEnvelope se;
 		try {
-
 			se = sp.getEnvelope();
 			SOAPBody sb = se.getBody();
 			SOAPHeader sh = se.getHeader();
@@ -77,71 +79,73 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 
 			//if (!opn.getLocalPart().equals(OPERATION_NAME)) {return true; }
 			/*TODO Perguntar se existem métodos que não sejam necessários encriptar, por exemplo testInit?*/
-			Key kc = null;
-			String email = null;
-			Date date = new Date();
-			long nounce = new Random().nextLong();
-			int duration = 120;
-			NodeList children = sb.getFirstChild().getChildNodes();
-			for (int i = 0; i < children.getLength(); i++) {
-				Node argument = (Node) children.item(i);
-				if (argument.getNodeName().equals("email")) {
-					InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
-					BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-					String line;
-					email = argument.getTextContent();
-					while((line = reader.readLine()) != null) {
-						line = line.trim();
-						if(line.startsWith("#") || !line.contains(","))
-							continue;
-						String[] values = line.split(",");
-						if(values[0].equals(email)) {
-							kc = SecurityHelper.generateKeyFromPassword(values[1]);
-							break;
+			if (outboundElement.booleanValue()) {
+				Key kc = null;
+				String email = null;
+				Date date = new Date();
+				long nounce = new Random().nextLong();
+				int duration = 120;
+				NodeList children = sb.getFirstChild().getChildNodes();
+				for (int i = 0; i < children.getLength(); i++) {
+					System.out.println("Estou dentro do for");
+					Node argument = (Node) children.item(i);
+					if (argument.getNodeName().equals("email")) {
+						//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
+						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Alexandra Figueiredo\\A48-SD18Proj\\A48-secrets.txt"));
+						String line;
+						email = argument.getTextContent();
+						while((line = reader.readLine()) != null) {
+							line = line.trim();
+							if(line.startsWith("#") || !line.contains(","))
+								continue;
+							String[] values = line.split(",");
+							if(values[0].equals(email)) {
+								kc = SecurityHelper.generateKeyFromPassword(values[1]);
+								break;
+							}
 						}
 					}
 				}
-			}
-			/*TODO Se key null, manda excepção???*/
-			System.out.println("Got KC.");
+				/*TODO Se key null, manda excepção???*/
+				System.out.println("Got KC.");
+				System.out.printf("email:",email);
 
-			KerbyClient client = new KerbyClient(url);
-			SessionKeyAndTicketView result = client.requestTicket(email, server, nounce, duration);
+				KerbyClient client = new KerbyClient(url);
+				SessionKeyAndTicketView result = client.requestTicket(email, server, nounce, duration);
 
-			System.out.println("Got client's ticket.");
+				System.out.println("Got client's ticket.");
+
+				
+				CipheredView cipheredSessionKey = result.getSessionKey();
+				CipheredView cipheredTicket = result.getTicket();
 
 
-			CipheredView cipheredSessionKey = result.getSessionKey();
-			CipheredView cipheredTicket = result.getTicket();
+				SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
+				if(!(nounce == sessionkey.getNounce())) {
+					throw new KerbyException();
+				}
+				
+				CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
 
+				System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
 
-			SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
-			if(!(nounce == sessionkey.getNounce())) {
-				throw new KerbyException();
-			}
-
-			CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
-
-			System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
-
-			/*TODO fix url*/
-			Name name = se.createName("TicketHeader", "ticket", url);
-			SOAPHeaderElement element = sh.addHeaderElement(name);
+				/*TODO fix url*/
+				System.out.println("Add First HeaderElement");
+				Name name = se.createName("TicketHeader", "ticket", url);
+				SOAPHeaderElement element = sh.addHeaderElement(name);
 		
-			CipherClerk clerk = new CipherClerk();
-			element.addChildElement(clerk.cipherToXMLNode(cipheredTicket, "TicketHeader").getLocalName());
+				CipherClerk clerk = new CipherClerk();
+				element.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredTicket, "TicketHeader")));
+				
+				Name nameAuth = se.createName("AuthHeader", "auth", url);
+				SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
+				elementAuth.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredAuth, "AuthHeader")));
+				
 
-			Name nameAuth = se.createName("AuthHeader", "auth", url);
-			SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
-			elementAuth.addChildElement(clerk.cipherToXMLNode(cipheredAuth, "AuthHeader").getLocalName());
+				smc.put("SessionKey", sessionkey.getKeyXY());
+				msg.saveChanges();
 
-			/*sb.addChildElement(clerk.cipherToXMLNode(cipheredSessionKey, "KeySession").getLocalName());*/
-
-			smc.put("SessionKey", sessionkey.getKeyXY());
-			msg.saveChanges();
-
-
-			/* TODO Acrescentar o if, para ver se está a receber ou a ler*/
+			}
 
 		}	 catch (SOAPException e1) {
 			// TODO Auto-generated catch block

@@ -32,14 +32,21 @@ import javax.xml.ws.handler.MessageContext;
 import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 
+import pt.ulisboa.tecnico.sdis.kerby.CipherClerk;
+import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
+import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
+import pt.ulisboa.tecnico.sdis.kerby.Ticket;
+
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
+import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 
 
 
-public class MACHandler implements SOAPHandler<SOAPMessageContext> {
+public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext> {
 	private static final String MAC_ALGO = "HmacSHA256";
 	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
+	private static final String server_password = "FBiMOd9e";
 	/** XML transformer factory. */
 	private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
 	/** XML transformer property name for XML indentation amount. */
@@ -63,9 +70,6 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			if (sh == null) { sh = se.addHeader(); }
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
-
-
-			Key kcs = (Key) smc.get("SessionKey");
 			
 			String src = sb.getTextContent();
 			/*String message;
@@ -81,7 +85,11 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			
 			byte[] messageBytes = src.getBytes();
 			System.out.printf("MacContent",src);
+		
+			
 			if (outboundElement.booleanValue()) {
+				//GetSessionkey
+				Key kcs = (Key) smc.get("SessionKey");
 				
 				// make MAC
 				System.out.println("Signing ...");
@@ -93,21 +101,42 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 				SOAPHeaderElement elementMac = sh.addHeaderElement(name);
 				elementMac.addTextNode(printHexBinary(cipherDigest));
 				
-				System.out.println("Mac Header");
+
+
+				msg.saveChanges();
 			}
 			else {
-				//Get Ticket
+				//GetMac
 				Name name = se.createName("MacHeader", "mac", url);
 				Iterator<?> it = sh.getChildElements(name);
 				// check header element
 				if (!it.hasNext()) {
-					System.out.println("Header element not found.");
-					//lançar excepçãoRunTime
+					System.out.println("MAC Header element not found.");
 					return true;
 				}
 				SOAPElement element = (SOAPElement) it.next();
 				
 				byte[] cipherDigest = element.getValue().getBytes();
+				
+				//Get Ticket
+				Name nameTicket = se.createName("TicketHeader", "ticket", url);
+				it = sh.getChildElements(nameTicket);
+				// check header element
+				if (!it.hasNext()) {
+					System.out.println("Header element not found.");
+					return true;
+				}
+				SOAPElement elementTicket = (SOAPElement) it.next();
+				
+				CipherClerk clerk = new CipherClerk();
+				byte[] aux = parseHexBinary(elementTicket.getValue());
+				CipheredView cipheredTicket = clerk.cipherFromXMLBytes(aux);
+				
+				Key ks = SecurityHelper.generateKeyFromPassword(server_password);
+
+				System.out.println("Got KS.");
+				Ticket ticket = new Ticket(cipheredTicket, ks);
+				Key kcs = ticket.getKeyXY();
 				
 				// verify the MAC
 		     	System.out.println("Verifying ...");
