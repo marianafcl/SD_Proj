@@ -42,18 +42,23 @@ import pt.ulisboa.tecnico.sdis.kerby.BadTicketRequest_Exception;
 import pt.ulisboa.tecnico.sdis.kerby.CipherClerk;
 import pt.ulisboa.tecnico.sdis.kerby.CipheredView;
 import pt.ulisboa.tecnico.sdis.kerby.KerbyException;
+import pt.ulisboa.tecnico.sdis.kerby.RequestTime;
 import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKey;
 import pt.ulisboa.tecnico.sdis.kerby.SessionKeyAndTicketView;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClient;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClientException;
 import pt.ulisboa.tecnico.sdis.kerby.Auth;
+
+import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 
 public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
-	private static final String url = 	"http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
+	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
 	private static final String server = "binas@A48.binas.org";
+	private Key Kcs;
+	private Date date;
 
 	public Set<QName> getHeaders() {
 		return null;
@@ -77,12 +82,13 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
 
+		
 			//if (!opn.getLocalPart().equals(OPERATION_NAME)) {return true; }
 			/*TODO Perguntar se existem métodos que não sejam necessários encriptar, por exemplo testInit?*/
 			if (outboundElement.booleanValue()) {
 				Key kc = null;
 				String email = null;
-				Date date = new Date();
+				this.date = new Date();
 				long nounce = new Random().nextLong();
 				int duration = 120;
 				NodeList children = sb.getFirstChild().getChildNodes();
@@ -93,7 +99,11 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 						//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
 						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Alexandra Figueiredo\\A48-SD18Proj\\A48-secrets.txt"));
 						String line;
-						email = argument.getTextContent();
+						String sec = argument.getTextContent();
+						ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+						byteOut.write(sec.getBytes());
+						email = byteOut.toString();
+						System.out.println(email);
 						while((line = reader.readLine()) != null) {
 							line = line.trim();
 							if(line.startsWith("#") || !line.contains(","))
@@ -129,8 +139,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 
 				System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
 
-				/*TODO fix url*/
-				System.out.println("Add First HeaderElement");
+				
 				Name name = se.createName("TicketHeader", "ticket", url);
 				SOAPHeaderElement element = sh.addHeaderElement(name);
 		
@@ -141,10 +150,29 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 				SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
 				elementAuth.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredAuth, "AuthHeader")));
 				
-
+				this.Kcs = sessionkey.getKeyXY();
 				smc.put("SessionKey", sessionkey.getKeyXY());
 				msg.saveChanges();
 
+			}
+			
+			else {
+				Name name = se.createName("RequestTimeHeader", "requestTime", url);
+				Iterator<?> it = sh.getChildElements(name);
+				// check header element
+				if (!it.hasNext()) {
+					System.out.println("RequestTimeHeader element not found.");
+					return true;
+				}
+				SOAPElement element = (SOAPElement) it.next();
+				
+				CipherClerk clerk = new CipherClerk();
+				CipheredView cipheredTimeRequest = clerk.cipherFromXMLBytes(parseHexBinary(element.getValue()));
+				
+				RequestTime tr = new RequestTime(cipheredTimeRequest, this.Kcs);
+		        if(!date.equals(tr.getTimeRequest())) {
+		        	throw new KerbyException();
+		        }
 			}
 
 		}	 catch (SOAPException e1) {

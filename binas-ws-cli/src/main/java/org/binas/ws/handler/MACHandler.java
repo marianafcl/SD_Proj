@@ -1,6 +1,7 @@
 package org.binas.ws.handler;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
@@ -33,7 +34,7 @@ import javax.xml.ws.handler.soap.SOAPHandler;
 import javax.xml.ws.handler.soap.SOAPMessageContext;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
-
+import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 
 
@@ -46,6 +47,7 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 	private static final String XML_INDENT_AMOUNT_PROPERTY = "{http://xml.apache.org/xslt}indent-amount";
 	/** XML indentation amount to use (default=0). */
 	private static final Integer XML_INDENT_AMOUNT_VALUE = 2;
+	private Key Kcs;
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
@@ -54,7 +56,7 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 		SOAPMessage msg = smc.getMessage();
 		SOAPPart sp = msg.getSOAPPart();
 		SOAPEnvelope se;
-
+		
 
 		try {
 			se = sp.getEnvelope();
@@ -63,12 +65,9 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			if (sh == null) { sh = se.addHeader(); }
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
-
-
-			Key kcs = (Key) smc.get("SessionKey");
 			
-			String src = sb.getTextContent();
-			/*String message;
+			Source src = msg.getSOAPPart().getContent();
+			String message;
 			StringWriter outWriter = new StringWriter();
 			StreamResult result = new StreamResult( outWriter );
 			
@@ -77,12 +76,15 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			transformer.setOutputProperty(XML_INDENT_AMOUNT_PROPERTY, XML_INDENT_AMOUNT_VALUE.toString());
 			transformer.transform(src, result);
 			StringBuffer m = outWriter.getBuffer(); 
-			String finalstring = m.toString();*/
-			
-			byte[] messageBytes = src.getBytes();
-			System.out.printf("MacContent",src);
+			String finalstring = m.toString();
+			String parts[] = finalstring.split("<S:Body>");
+			byte[] messageBytes = parts[1].getBytes();
+			System.out.println(new String(messageBytes));
+			//System.out.println("fim");
 			if (outboundElement.booleanValue()) {
-				
+				Key kcs = (Key) smc.get("SessionKey");
+				this.Kcs = kcs;
+				System.out.println(kcs);
 				// make MAC
 				System.out.println("Signing ...");
 				byte[] cipherDigest = makeMAC(messageBytes, kcs);
@@ -103,15 +105,15 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 				if (!it.hasNext()) {
 					System.out.println("Header element not found.");
 					//lançar excepçãoRunTime
-					return true;
+					throw new RuntimeException();
 				}
 				SOAPElement element = (SOAPElement) it.next();
 				
-				byte[] cipherDigest = element.getValue().getBytes();
+				byte[] cipherDigest = parseHexBinary(element.getValue());
 				
 				// verify the MAC
 		     	System.out.println("Verifying ...");
-		     	boolean resultAux = verifyMAC(cipherDigest, messageBytes, kcs);
+		     	boolean resultAux = verifyMAC(cipherDigest, messageBytes, this.Kcs);
 		     	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
 				
 			}
@@ -200,7 +202,12 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 	private static boolean verifyMAC(byte[] cipherDigest, byte[] bytes, Key key) throws Exception {
 
 		byte[] cipheredBytes = makeMAC(bytes, key);
-		return Arrays.equals(cipherDigest, cipheredBytes);
+		for(int i = 0; i < cipheredBytes.length; i++) { 
+			if (cipheredBytes[i] != cipherDigest[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

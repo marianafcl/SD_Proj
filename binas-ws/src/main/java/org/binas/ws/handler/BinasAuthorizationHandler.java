@@ -1,6 +1,7 @@
 package org.binas.ws.handler;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
@@ -71,8 +72,8 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
 			
-			String src = sb.getTextContent();
-			/*String message;
+			Source src = msg.getSOAPPart().getContent();
+			String message;
 			StringWriter outWriter = new StringWriter();
 			StreamResult result = new StreamResult( outWriter );
 			
@@ -81,16 +82,17 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 			transformer.setOutputProperty(XML_INDENT_AMOUNT_PROPERTY, XML_INDENT_AMOUNT_VALUE.toString());
 			transformer.transform(src, result);
 			StringBuffer m = outWriter.getBuffer(); 
-			String finalstring = m.toString();*/
+			String finalstring = m.toString();
+			String parts[] = finalstring.split("<S:Body>");
 			
-			byte[] messageBytes = src.getBytes();
-			System.out.printf("MacContent",src);
-		
+			byte[] messageBytes = parts[1].getBytes();
+			System.out.println("Recebido cipherDigest");
+			
 			
 			if (outboundElement.booleanValue()) {
 				//GetSessionkey
 				Key kcs = (Key) smc.get("SessionKey");
-				
+				System.out.println(kcs);
 				// make MAC
 				System.out.println("Signing ...");
 				byte[] cipherDigest = makeMAC(messageBytes, kcs);
@@ -100,9 +102,7 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 				Name name = se.createName("MacHeader", "mac", url);
 				SOAPHeaderElement elementMac = sh.addHeaderElement(name);
 				elementMac.addTextNode(printHexBinary(cipherDigest));
-				
-
-
+			
 				msg.saveChanges();
 			}
 			else {
@@ -112,19 +112,19 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 				// check header element
 				if (!it.hasNext()) {
 					System.out.println("MAC Header element not found.");
-					return true;
+					throw new RuntimeException();
 				}
 				SOAPElement element = (SOAPElement) it.next();
 				
-				byte[] cipherDigest = element.getValue().getBytes();
-				
+				byte[] cipherDigest = parseHexBinary(element.getValue());
+				System.out.println(new String(cipherDigest));
 				//Get Ticket
 				Name nameTicket = se.createName("TicketHeader", "ticket", url);
 				it = sh.getChildElements(nameTicket);
 				// check header element
 				if (!it.hasNext()) {
 					System.out.println("Header element not found.");
-					return true;
+					throw new RuntimeException();
 				}
 				SOAPElement elementTicket = (SOAPElement) it.next();
 				
@@ -137,60 +137,22 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 				System.out.println("Got KS.");
 				Ticket ticket = new Ticket(cipheredTicket, ks);
 				Key kcs = ticket.getKeyXY();
-				
+				System.out.println(kcs);
 				// verify the MAC
 		     	System.out.println("Verifying ...");
 		     	boolean resultAux = verifyMAC(cipherDigest, messageBytes, kcs);
+		     	System.out.println(resultAux);
 		     	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
 				
 			}
 		} catch (SOAPException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			throw new RuntimeException();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new RuntimeException();
 		}
 
-
-		//if (!opn.getLocalPart().equals(OPERATION_NAME)) {return true; }
-		/*TODO Perguntar se existem métodos que não sejam necessários encriptar, por exemplo testInit?*/
-		/*Key kc = null;
-			String email = null;
-			Date date = new Date();
-			long nounce = new Random().nextLong();
-			int duration = 120;
-			CipherClerk clerk = new CipherClerk();
-			CipheredView cipheredSessionKey = null;
-			NodeList children = sb.getFirstChild().getChildNodes();
-			for (int i = 0; i < children.getLength(); i++) {
-				Node argument = (Node) children.item(i);
-				if (argument.getNodeName().equals("email")) {
-					InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
-					BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-					String line;
-					email = argument.getTextContent();
-					while((line = reader.readLine()) != null) {
-						line = line.trim();
-						if(line.startsWith("#") || !line.contains(","))
-							continue;
-						String[] values = line.split(",");
-						if(values[0].equals(email)) {
-							kc = SecurityHelper.generateKeyFromPassword(values[1]);
-							break;
-						}
-					}
-				}
-				else if (argument.getNodeName().equals("KeySession")) {
-					cipheredSessionKey = clerk.cipherFromXMLNode(argument);
-				}
-			}
-
-
-			SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
-			if(!(nounce == sessionkey.getNounce())) {
-				throw new KerbyException();
-			}*/
 
 
 		return true;
@@ -227,9 +189,13 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 
 
 	private static boolean verifyMAC(byte[] cipherDigest, byte[] bytes, Key key) throws Exception {
-
 		byte[] cipheredBytes = makeMAC(bytes, key);
-		return Arrays.equals(cipherDigest, cipheredBytes);
+		for(int i = 0; i < cipheredBytes.length; i++) { 
+			if (cipheredBytes[i] != cipherDigest[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
