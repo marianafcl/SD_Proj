@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
@@ -53,6 +54,7 @@ import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 
 public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext> {
+	private static final Set<String> OPERATION_NAME = new HashSet<String>(Arrays.asList(new String[] {"getCredit","getCreditResponse","activateUser","activateUserResponse", "rentBina", "RentBinaResponse", "returnBina", "returnBinaResponse"}));
 	private static final String MAC_ALGO = "HmacSHA256";
 	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
 	private static final String server_password = "FBiMOd9e";
@@ -70,7 +72,7 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 		SOAPMessage msg = smc.getMessage();
 		SOAPPart sp = msg.getSOAPPart();
 		SOAPEnvelope se;
-
+		
 		try {
 			se = sp.getEnvelope();
 			SOAPBody sb = se.getBody();
@@ -79,7 +81,7 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
 			
-		
+			if (!OPERATION_NAME.contains(opn.getLocalPart())) {return true; }
 			byte[] messageBytes = soapBody(msg).getBytes();
 			System.out.println("Recebido cipherDigest");	
 			
@@ -182,7 +184,9 @@ public class BinasAuthorizationHandler implements SOAPHandler<SOAPMessageContext
      	boolean resultAux = verifyMAC(cipherDigest, messageBytes, kcs);
      	System.out.println(resultAux);
      	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
-     	//TODO MANDAR EXCEPÇÃO 
+     	if(!resultAux) {
+     		throw new RuntimeException();
+     	}
 		
      	Key kc = null;
      	String email = null;

@@ -11,18 +11,16 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
 
-import javax.crypto.Cipher;
 import javax.xml.bind.JAXBException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.Name;
@@ -36,7 +34,6 @@ import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.SOAPPart;
 import javax.xml.ws.handler.MessageContext;
-import javax.xml.ws.handler.MessageContext.Scope;
 
 import pt.ulisboa.tecnico.sdis.kerby.BadTicketRequest_Exception;
 import pt.ulisboa.tecnico.sdis.kerby.CipherClerk;
@@ -50,11 +47,13 @@ import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClient;
 import pt.ulisboa.tecnico.sdis.kerby.cli.KerbyClientException;
 import pt.ulisboa.tecnico.sdis.kerby.Auth;
 
+
 import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
 
 public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
+	private static final Set<String> OPERATION_NAME = new HashSet<String>(Arrays.asList(new String[] {"getCredit","getCreditResponse","activateUser","activateUserResponse", "rentBina", "RentBinaResponse", "returnBina", "returnBinaResponse"}));
 	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
 	private static final String server = "binas@A48.binas.org";
 	private Key Kcs;
@@ -83,125 +82,34 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
 
 		
-			//if (!opn.getLocalPart().equals(OPERATION_NAME)) {return true; }
-			/*TODO Perguntar se existem métodos que não sejam necessários encriptar, por exemplo testInit?*/
+			if (!OPERATION_NAME.contains(opn.getLocalPart())) {return true; }
 			if (outboundElement.booleanValue()) {
-				Key kc = null;
-				String email = null;
-				this.date = new Date();
-				long nounce = new Random().nextLong();
-				int duration = 120;
-				NodeList children = sb.getFirstChild().getChildNodes();
-				for (int i = 0; i < children.getLength(); i++) {
-					System.out.println("Estou dentro do for");
-					Node argument = (Node) children.item(i);
-					if (argument.getNodeName().equals("email")) {
-						//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
-						BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Alexandra Figueiredo\\A48-SD18Proj\\A48-secrets.txt"));
-						String line;
-						String sec = argument.getTextContent();
-						ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-						byteOut.write(sec.getBytes());
-						email = byteOut.toString();
-						System.out.println(email);
-						while((line = reader.readLine()) != null) {
-							line = line.trim();
-							if(line.startsWith("#") || !line.contains(","))
-								continue;
-							String[] values = line.split(",");
-							if(values[0].equals(email)) {
-								kc = SecurityHelper.generateKeyFromPassword(values[1]);
-								break;
-							}
-						}
-					}
-				}
-				/*TODO Se key null, manda excepção???*/
-				System.out.println("Got KC.");
-				System.out.printf("email:",email);
-
-				KerbyClient client = new KerbyClient(url);
-				SessionKeyAndTicketView result = client.requestTicket(email, server, nounce, duration);
-
-				System.out.println("Got client's ticket.");
-
-				
-				CipheredView cipheredSessionKey = result.getSessionKey();
-				CipheredView cipheredTicket = result.getTicket();
-
-
-				SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
-				if(!(nounce == sessionkey.getNounce())) {
-					throw new KerbyException();
-				}
-				
-				CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
-
-				System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
-
-				
-				Name name = se.createName("TicketHeader", "ticket", url);
-				SOAPHeaderElement element = sh.addHeaderElement(name);
-		
-				CipherClerk clerk = new CipherClerk();
-				element.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredTicket, "TicketHeader")));
-				
-				Name nameAuth = se.createName("AuthHeader", "auth", url);
-				SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
-				elementAuth.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredAuth, "AuthHeader")));
-				
-				this.Kcs = sessionkey.getKeyXY();
-				smc.put("SessionKey", sessionkey.getKeyXY());
+				processOutbound(smc, sb, se, sh);
 				msg.saveChanges();
-
 			}
 			
 			else {
-				Name name = se.createName("RequestTimeHeader", "requestTime", url);
-				Iterator<?> it = sh.getChildElements(name);
-				// check header element
-				if (!it.hasNext()) {
-					System.out.println("RequestTimeHeader element not found.");
-					return true;
-				}
-				SOAPElement element = (SOAPElement) it.next();
-				
-				CipherClerk clerk = new CipherClerk();
-				CipheredView cipheredTimeRequest = clerk.cipherFromXMLBytes(parseHexBinary(element.getValue()));
-				
-				RequestTime tr = new RequestTime(cipheredTimeRequest, this.Kcs);
-		        if(!date.equals(tr.getTimeRequest())) {
-		        	throw new KerbyException();
-		        }
+				processInbound(se, sh);
 			}
 
 		}	 catch (SOAPException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			throw new RuntimeException();
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (DOMException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (KerbyClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (BadTicketRequest_Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (KerbyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		} catch (JAXBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new RuntimeException();
 		}
 
 		return true;
@@ -220,5 +128,109 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 	 */
 	public void close(MessageContext messageContext) {
 
+	}
+	
+	/**Process inbound message**/
+	
+	
+	/**Process outbound message
+	 * @param smc 
+	 * @throws IOException 
+	 * @throws InvalidKeySpecException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws KerbyClientException 
+	 * @throws BadTicketRequest_Exception 
+	 * @throws KerbyException 
+	 * @throws SOAPException 
+	 * @throws JAXBException **/
+	public void processOutbound(SOAPMessageContext smc, SOAPBody sb, SOAPEnvelope se, SOAPHeader sh) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, KerbyClientException, BadTicketRequest_Exception, KerbyException, SOAPException, JAXBException {
+		Key kc = null;
+		String email = null;
+		this.date = new Date();
+		long nounce = new Random().nextLong();
+		int duration = 120;
+		NodeList children = sb.getFirstChild().getChildNodes();
+		for (int i = 0; i < children.getLength(); i++) {
+			System.out.println("Estou dentro do for");
+			Node argument = (Node) children.item(i);
+			if (argument.getNodeName().equals("email")) {
+				//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
+				BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Alexandra Figueiredo\\A48-SD18Proj\\A48-secrets.txt"));
+				String line;
+				String sec = argument.getTextContent();
+				ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+				byteOut.write(sec.getBytes());
+				email = byteOut.toString();
+				System.out.println(email);
+				while((line = reader.readLine()) != null) {
+					line = line.trim();
+					if(line.startsWith("#") || !line.contains(","))
+						continue;
+					String[] values = line.split(",");
+					if(values[0].equals(email)) {
+						kc = SecurityHelper.generateKeyFromPassword(values[1]);
+						break;
+					}
+				}
+			}
+		}
+	
+		System.out.println("Got KC.");
+		System.out.printf("email:",email);
+
+		KerbyClient client = new KerbyClient(url);
+		SessionKeyAndTicketView result = client.requestTicket(email, server, nounce, duration);
+
+		System.out.println("Got client's ticket.");
+
+		
+		CipheredView cipheredSessionKey = result.getSessionKey();
+		CipheredView cipheredTicket = result.getTicket();
+
+
+		SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
+		if(!(nounce == sessionkey.getNounce())) {
+			throw new KerbyException();
+		}
+		
+		CipheredView cipheredAuth = (new Auth(email, date)).cipher(sessionkey.getKeyXY());
+
+		System.out.print("Client's SessionKey (KCS included): "); System.out.println(sessionkey);
+
+		
+		Name name = se.createName("TicketHeader", "ticket", url);
+		SOAPHeaderElement element = sh.addHeaderElement(name);
+
+		CipherClerk clerk = new CipherClerk();
+		element.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredTicket, "TicketHeader")));
+		
+		Name nameAuth = se.createName("AuthHeader", "auth", url);
+		SOAPHeaderElement elementAuth = sh.addHeaderElement(nameAuth);
+		elementAuth.addTextNode(printHexBinary(clerk.cipherToXMLBytes(cipheredAuth, "AuthHeader")));
+		
+		this.Kcs = sessionkey.getKeyXY();
+		smc.put("SessionKey", sessionkey.getKeyXY());
+	}
+	
+	/**Process inbound message
+	 * @throws SOAPException 
+	 * @throws JAXBException 
+	 * @throws KerbyException **/
+	public void processInbound(SOAPEnvelope se, SOAPHeader sh) throws SOAPException, JAXBException, KerbyException {
+		Name name = se.createName("RequestTimeHeader", "requestTime", url);
+		Iterator<?> it = sh.getChildElements(name);
+		// check header element
+		if (!it.hasNext()) {
+			System.out.println("RequestTimeHeader element not found.");
+		}
+		SOAPElement element = (SOAPElement) it.next();
+		
+		CipherClerk clerk = new CipherClerk();
+		CipheredView cipheredTimeRequest = clerk.cipherFromXMLBytes(parseHexBinary(element.getValue()));
+		
+		RequestTime tr = new RequestTime(cipheredTimeRequest, this.Kcs);
+        if(!date.equals(tr.getTimeRequest())) {
+        	throw new KerbyException();
+        }
 	}
 }

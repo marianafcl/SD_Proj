@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
@@ -41,6 +42,7 @@ import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 
 public class MACHandler implements SOAPHandler<SOAPMessageContext> {
+	private static final Set<String> OPERATION_NAME = new HashSet<String>(Arrays.asList(new String[] {"getCredit","getCreditResponse","activateUser","activateUserResponse", "rentBina", "RentBinaResponse", "returnBina", "returnBinaResponse"}));
 	private static final String MAC_ALGO = "HmacSHA256";
 	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
 	/** XML transformer factory. */
@@ -70,7 +72,7 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			
 			
 			byte[] messageBytes = soapBody(msg).getBytes();
-			
+			if (!OPERATION_NAME.contains(opn.getLocalPart())) {return true; }
 			if (outboundElement.booleanValue()) {
 				processOutBound(smc, se, sh, messageBytes);
 				msg.saveChanges();
@@ -148,6 +150,9 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
      	System.out.println("Verifying ...");
      	boolean resultAux = verifyMAC(cipherDigest, messageBytes, this.Kcs);
      	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
+     	if(!resultAux) {
+     		throw new RuntimeException();
+     	}
 	}
 
 
