@@ -7,6 +7,7 @@ import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -34,11 +35,12 @@ import pt.ulisboa.tecnico.sdis.kerby.SecurityHelper;
 import pt.ulisboa.tecnico.sdis.kerby.Ticket;
 
 public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
-	private static final String server = "binas@A48.binas.org";
 	private static final String server_password = "FBiMOd9e";
+	private static final String server = "binas@A48.binas.org";
 	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
 	private Key Kcs;
 	private Auth auth;
+	private HashMap<String, Date> clientsTreq = new HashMap<>();
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
@@ -109,7 +111,7 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 				this.Kcs = kcs;
 				this.auth = auth;
 				Date now = new Date();
-				if(!ticket.getX().equals(auth.getX()) || now.before(ticket.getTime1()) || now.after(ticket.getTime2())) {
+				if(!ticket.getX().equals(auth.getX()) || !ticket.getY().equals(server)|| now.before(ticket.getTime1()) || now.after(ticket.getTime2())) {
 					throw new KerbyException();
 				}
 
@@ -117,6 +119,16 @@ public class KerberosServerHandler implements SOAPHandler<SOAPMessageContext>{
 				msg.saveChanges();
 
 				System.out.print("Server's Client's Auth: {"); System.out.print(auth.getX()); System.out.print("; "); System.out.print(auth.getTimeRequest()); System.out.println("}");
+				
+				//Verificar se TimeRequest é valido
+				String email = auth.getX();
+				if(clientsTreq.containsKey(email)) {
+					if(clientsTreq.get(email).after(auth.getTimeRequest())) {
+						throw new RuntimeException();
+					}
+				}
+				
+				clientsTreq.put(email, auth.getTimeRequest());
 			}
 		} catch (SOAPException e) {
 			e.printStackTrace();

@@ -27,6 +27,8 @@ import javax.xml.soap.SOAPPart;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.handler.MessageContext;
@@ -66,105 +68,22 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			QName svcn = (QName) smc.get(MessageContext.WSDL_SERVICE);
 			QName opn = (QName) smc.get(MessageContext.WSDL_OPERATION);
 			
-			Source src = msg.getSOAPPart().getContent();
-			String message;
-			StringWriter outWriter = new StringWriter();
-			StreamResult result = new StreamResult( outWriter );
 			
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty(XML_INDENT_AMOUNT_PROPERTY, XML_INDENT_AMOUNT_VALUE.toString());
-			transformer.transform(src, result);
-			StringBuffer m = outWriter.getBuffer(); 
-			String finalstring = m.toString();
-			String parts[] = finalstring.split("<S:Body>");
-			byte[] messageBytes = parts[1].getBytes();
-			System.out.println(new String(messageBytes));
-			//System.out.println("fim");
+			byte[] messageBytes = soapBody(msg).getBytes();
+			
 			if (outboundElement.booleanValue()) {
-				Key kcs = (Key) smc.get("SessionKey");
-				this.Kcs = kcs;
-				System.out.println(kcs);
-				// make MAC
-				System.out.println("Signing ...");
-				byte[] cipherDigest = makeMAC(messageBytes, kcs);
-				System.out.println("CipherDigest:");
-				System.out.println(printHexBinary(cipherDigest));
-
-				Name name = se.createName("MacHeader", "mac", url);
-				SOAPHeaderElement elementMac = sh.addHeaderElement(name);
-				elementMac.addTextNode(printHexBinary(cipherDigest));
-				
-				System.out.println("Mac Header");
+				processOutBound(smc, se, sh, messageBytes);
+				msg.saveChanges();
 			}
 			else {
-				//Get Ticket
-				Name name = se.createName("MacHeader", "mac", url);
-				Iterator<?> it = sh.getChildElements(name);
-				// check header element
-				if (!it.hasNext()) {
-					System.out.println("Header element not found.");
-					//lançar excepçãoRunTime
-					throw new RuntimeException();
-				}
-				SOAPElement element = (SOAPElement) it.next();
-				
-				byte[] cipherDigest = parseHexBinary(element.getValue());
-				
-				// verify the MAC
-		     	System.out.println("Verifying ...");
-		     	boolean resultAux = verifyMAC(cipherDigest, messageBytes, this.Kcs);
-		     	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
-				
+				processInBound(se, sh, messageBytes);
 			}
 		} catch (SOAPException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			throw new RuntimeException();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new RuntimeException();
 		}
-
-
-		//if (!opn.getLocalPart().equals(OPERATION_NAME)) {return true; }
-		/*TODO Perguntar se existem métodos que não sejam necessários encriptar, por exemplo testInit?*/
-		/*Key kc = null;
-			String email = null;
-			Date date = new Date();
-			long nounce = new Random().nextLong();
-			int duration = 120;
-			CipherClerk clerk = new CipherClerk();
-			CipheredView cipheredSessionKey = null;
-			NodeList children = sb.getFirstChild().getChildNodes();
-			for (int i = 0; i < children.getLength(); i++) {
-				Node argument = (Node) children.item(i);
-				if (argument.getNodeName().equals("email")) {
-					InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
-					BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-					String line;
-					email = argument.getTextContent();
-					while((line = reader.readLine()) != null) {
-						line = line.trim();
-						if(line.startsWith("#") || !line.contains(","))
-							continue;
-						String[] values = line.split(",");
-						if(values[0].equals(email)) {
-							kc = SecurityHelper.generateKeyFromPassword(values[1]);
-							break;
-						}
-					}
-				}
-				else if (argument.getNodeName().equals("KeySession")) {
-					cipheredSessionKey = clerk.cipherFromXMLNode(argument);
-				}
-			}
-
-
-			SessionKey sessionkey = new SessionKey(cipheredSessionKey, kc);
-			if(!(nounce == sessionkey.getNounce())) {
-				throw new KerbyException();
-			}*/
-
 
 		return true;
 	}
@@ -186,6 +105,50 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	/**Process the outbound messages
+	 * @param se 
+	 * @param sh 
+	 * @param messageBytes 
+	 * @throws Exception **/
+	public void processOutBound(SOAPMessageContext smc, SOAPEnvelope se, SOAPHeader sh, byte[] messageBytes) throws Exception {
+		//GetSessionkey
+		Key kcs = (Key) smc.get("SessionKey");
+		this.Kcs = kcs;
+		System.out.println(kcs);
+		// make MAC
+		System.out.println("Signing ...");
+		byte[] cipherDigest = makeMAC(messageBytes, kcs);
+		System.out.println("CipherDigest:");
+		System.out.println(printHexBinary(cipherDigest));
+
+		Name name = se.createName("MacHeader", "mac", url);
+		SOAPHeaderElement elementMac = sh.addHeaderElement(name);
+		elementMac.addTextNode(printHexBinary(cipherDigest));
+
+	}
+	
+	/**Process the inbound messages
+	 * @throws Exception **/
+	public void processInBound(SOAPEnvelope se, SOAPHeader sh, byte[] messageBytes) throws Exception {
+		//Get Ticket
+		Name name = se.createName("MacHeader", "mac", url);
+		Iterator<?> it = sh.getChildElements(name);
+		// check header element
+		if (!it.hasNext()) {
+			System.out.println("Header element not found.");
+			//lançar excepçãoRunTime
+			throw new RuntimeException();
+		}
+		SOAPElement element = (SOAPElement) it.next();
+		
+		byte[] cipherDigest = parseHexBinary(element.getValue());
+		
+		// verify the MAC
+     	System.out.println("Verifying ...");
+     	boolean resultAux = verifyMAC(cipherDigest, messageBytes, this.Kcs);
+     	System.out.println("MAC is " + (resultAux ? "right" : "wrong"));
+	}
 
 
 	/** Makes a message authentication code. */
@@ -198,7 +161,8 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 		return cipherDigest;
 	}
 
-
+	
+	/**Verify the message authentication code**/
 	private static boolean verifyMAC(byte[] cipherDigest, byte[] bytes, Key key) throws Exception {
 
 		byte[] cipheredBytes = makeMAC(bytes, key);
@@ -208,6 +172,23 @@ public class MACHandler implements SOAPHandler<SOAPMessageContext> {
 			}
 		}
 		return true;
+	}
+	
+	/**Get Body message including the request/answer**/
+	public String soapBody(SOAPMessage msg) throws SOAPException, TransformerException {
+		Source src = msg.getSOAPPart().getContent();
+		String message;
+		StringWriter outWriter = new StringWriter();
+		StreamResult result = new StreamResult( outWriter );
+		
+		Transformer transformer = transformerFactory.newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty(XML_INDENT_AMOUNT_PROPERTY, XML_INDENT_AMOUNT_VALUE.toString());
+		transformer.transform(src, result);
+		StringBuffer m = outWriter.getBuffer(); 
+		String finalstring = m.toString();
+		String parts[] = finalstring.split("<S:Body>");
+		return parts[1];
 	}
 
 }
