@@ -57,6 +57,13 @@
         <handler>
             <handler-class>example.ws.handler.PrettyLogHandler</handler-class>
         </handler>
+        
+        <!-- 
+            Attack client by exchanging client's email.
+        -->
+        <!-- handler>
+            <handler-class>org.binas.ws.handler.EVILHandler</handler-class>
+        </handler-->
 
 	</handler-chain>
 </handler-chains>
