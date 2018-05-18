@@ -48,15 +48,6 @@ import static javax.xml.bind.DatatypeConverter.parseHexBinary;
 
 public class EVILHandler implements SOAPHandler<SOAPMessageContext> {
 	private static final Set<String> OPERATION_NAME = new HashSet<String>(Arrays.asList(new String[] {"getCredit","getCreditResponse","activateUser","activateUserResponse", "rentBina", "RentBinaResponse", "returnBina", "returnBinaResponse"}));
-	private static final String MAC_ALGO = "HmacSHA256";
-	private static final String url = "http://sec.sd.rnl.tecnico.ulisboa.pt:8888/kerby";
-	/** XML transformer factory. */
-	private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-	/** XML transformer property name for XML indentation amount. */
-	private static final String XML_INDENT_AMOUNT_PROPERTY = "{http://xml.apache.org/xslt}indent-amount";
-	/** XML indentation amount to use (default=0). */
-	private static final Integer XML_INDENT_AMOUNT_VALUE = 2;
-	private Key Kcs;
 
 	@Override
 	public boolean handleMessage(SOAPMessageContext smc) {
@@ -115,13 +106,8 @@ public class EVILHandler implements SOAPHandler<SOAPMessageContext> {
 	public void processOutBound(SOAPBody sb) throws Exception {
 		NodeList children = sb.getFirstChild().getChildNodes();
 		for (int i = 0; i < children.getLength(); i++) {
-			System.out.println("Estou dentro do for");
 			Node argument = (Node) children.item(i);
 			if (argument.getNodeName().equals("email")) {
-				//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
-				BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Alexandra Figueiredo\\A48-SD18Proj\\A48-secrets.txt"));
-				String line;
-				String sec = argument.getTextContent();
 				argument.setTextContent("charlie@A48.binas.org");
 			}
 		}
