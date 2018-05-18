@@ -161,7 +161,6 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 				ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
 				byteOut.write(sec.getBytes());
 				email = byteOut.toString();
-				System.out.println(email);
 				while((line = reader.readLine()) != null) {
 					line = line.trim();
 					if(line.startsWith("#") || !line.contains(","))
