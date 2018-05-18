@@ -58,28 +58,7 @@ public class BinasClientApp {
         //System.out.print(result);
         
         client.activateUser(email);
-        /*client.testInitStation(station1, 22, 7, 6, 1);
-        client.testInitStation(station2, 22, 7, 6, 1);
-        client.testInitStation(station3, 22, 7, 6, 1);
-        
-        while(true) {
-        	int credit = client.getCredit(email);
-        	System.out.println("	Getting credit...");
-        	System.out.println("	User:" + email + "has" + credit + "credit");
-        	
-        	System.out.println("Unsafe to reset Bina!!!");
-        	client.rentBina(station1, email);
-        	System.out.println("	Renting bina...");
-        	System.out.println("	Renting bina from " + station1 + "with email:" + email);
-       	
-        	client.returnBina(station1, email);
-        	System.out.println("	Returning bina...");
-        	System.out.println("	Returning bina to " + station1 + "with email:" + email);
-        	
-        	System.out.println("Safe to reset Bina!!!");
-        	Thread.sleep(10000);
-        }*/
-        
-	 }
+        client.getCredit(email);
+        }
 }
 

@@ -154,7 +154,7 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 			Node argument = (Node) children.item(i);
 			if (argument.getNodeName().equals("email")) {
 				//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
-				BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Alexandra Figueiredo\\A48-SD18Proj\\A48-secrets.txt"));
+				BufferedReader reader = new BufferedReader(new FileReader("" /* colocar aqui o path do ficheiro A48-secrets.txt*/));
 				String line;
 				String sec = argument.getTextContent();
 				ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
