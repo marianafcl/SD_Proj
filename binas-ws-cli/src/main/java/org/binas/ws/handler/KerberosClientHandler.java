@@ -151,7 +151,6 @@ public class KerberosClientHandler implements SOAPHandler<SOAPMessageContext>{
 		int duration = 120;
 		NodeList children = sb.getFirstChild().getChildNodes();
 		for (int i = 0; i < children.getLength(); i++) {
-			System.out.println("Estou dentro do for");
 			Node argument = (Node) children.item(i);
 			if (argument.getNodeName().equals("email")) {
 				//InputStream inputStream = KerberosClientHandler.class.getResourceAsStream("/A48-secrets.txt");
